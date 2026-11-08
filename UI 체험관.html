@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light only">
+<title>UI 체험관</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+/* layout: desktop dashboard. left = part nav, centre = live demo, right = prompt / when / rules / pair / used-in */
+:root{
+  --bg:#F2F5F3; --card:#FFFFFF; --fill:#F1F5F3; --fill2:#F8FAF9; --line:#E1E8E4;
+  --t1:#16201B; --t2:#2E3A34; --t3:#4C5A53; --t4:#84928B; --t5:#B3BEB8;
+  --g:#00C471; --g-d:#00A45E; --g-ink:#00703F; --g-w:#E4F6EC; --g-2:#8FE0B8; --g-3:#C7F0DA;
+  --red:#E5484D; --red-w:#FDECEC;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--t1);font:16px/1.6 "Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;letter-spacing:-.02em;-webkit-font-smoothing:antialiased;word-break:keep-all}
+button,input,select,textarea{font:inherit;letter-spacing:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--g-ink);outline-offset:2px}
+
+/* buttons + fields used by the shell and demos */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;padding:0 18px;border:0;border-radius:12px;background:var(--fill);color:var(--t2);font-size:15px;font-weight:600;cursor:pointer;transition:background .15s,transform .1s;white-space:nowrap}
+.btn:hover{background:#E3EAE6}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--g);color:#fff}
+.btn.primary:hover{background:var(--g-d)}
+.btn.weak{background:var(--g-w);color:var(--g-ink)}
+.btn.danger{background:var(--red);color:#fff}
+.btn.ghost{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line);color:var(--t3)}
+.btn.ghost:hover{background:var(--fill2)}
+.btn.sm{height:34px;padding:0 12px;font-size:14px;border-radius:10px}
+.btn.block{width:100%;white-space:normal;height:auto;min-height:44px;padding-block:10px}
+.btn:disabled{background:var(--fill);color:var(--t5);cursor:not-allowed;transform:none;box-shadow:none}
+.input,select.input{height:48px;padding:0 14px;border:0;border-radius:12px;background:var(--fill);font-size:15px;min-width:0;width:100%}
+textarea.input{height:auto;padding:12px 14px;min-height:72px;resize:vertical;line-height:1.5}
+.input::placeholder{color:var(--t5)}
+.input:focus{outline:2px solid var(--g);outline-offset:-2px;background:#fff}
+input[type=checkbox],input[type=radio]{width:20px;height:20px;accent-color:var(--g-ink);margin:0;flex:none;cursor:pointer}
+input[type=range]{width:100%;accent-color:var(--g-ink)}
+.stack{display:grid;gap:12px}
+.stack>*{min-width:0}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.label{font-size:13px;color:var(--t4);font-weight:500}
+.hint{color:var(--t4);font-size:13px;margin:0}
+.tag{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:6px;background:var(--fill);color:var(--t3);font-size:12px;font-weight:600;white-space:nowrap}
+.tag.g{background:var(--g-w);color:var(--g-ink)}
+.tag.red{background:var(--red-w);color:var(--red)}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pills button{border:0;height:36px;padding:0 14px;border-radius:999px;background:var(--fill);color:var(--t3);font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.pills button[aria-pressed=true]{background:var(--t1);color:#fff}
+
+/* app frame */
+.app{display:grid;grid-template-columns:280px minmax(0,1fr) 360px;gap:20px;max-width:1680px;margin:0 auto;padding-block:20px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));align-items:start;min-height:100vh}
+.app.home{grid-template-columns:280px minmax(0,1fr)}
+.panel{background:var(--card);border-radius:20px;padding:28px;min-width:0}
+.side{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;background:var(--card);border-radius:20px;padding:20px 12px 16px;display:flex;flex-direction:column;gap:14px;scrollbar-width:thin}
+.side>*{flex:none}
+.brand{border:0;background:transparent;text-align:left;padding:4px 8px;cursor:pointer;border-radius:10px}
+.brand b{display:block;font-size:19px;font-weight:800;letter-spacing:-.04em}
+.brand span{font-size:13px;color:var(--t4)}
+.side .input{height:42px;font-size:14px}
+.nav{display:grid;gap:14px}
+.nav h3{margin:0 0 4px;padding:0 10px;font-size:12px;font-weight:600;color:var(--t4)}
+.nl{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:10px;text-decoration:none;color:var(--t2);font-size:15px;font-weight:500;transition:background .12s}
+.nl small{color:var(--t5);font-size:12px;font-weight:500}
+.nl:hover{background:var(--fill2)}
+.nl[aria-current=page]{background:var(--g-w);color:var(--g-ink);font-weight:700}
+.nl[aria-current=page] small{color:var(--g-ink)}
+.nav .none{padding:0 10px;font-size:13px;color:var(--t4)}
+.main{display:grid;gap:20px;min-width:0}
+/* home */
+.hero h1{margin:0;font-size:34px;font-weight:800;letter-spacing:-.04em;line-height:1.25}
+.hero > div > p{margin:10px 0 0;color:var(--t3);font-size:16px;max-width:42em}
+.hero-row{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:start}
+.how{background:var(--fill2);border-radius:16px;padding:18px 20px}
+.how b{font-size:15px}
+.how ol{margin:8px 0 0;padding-left:18px;color:var(--t3);font-size:14px;display:grid;gap:4px}
+.sit{margin-top:22px}
+.sit .label{display:block;margin-bottom:10px}
+.sit .pills button[aria-pressed=true]{background:var(--g-ink)}
+.groups{display:grid;gap:20px}
+.group h2{margin:0 0 4px;font-size:20px;font-weight:700;letter-spacing:-.03em}
+.group > p{margin:0 0 16px;color:var(--t4);font-size:14px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.pcard{display:flex;gap:14px;align-items:center;padding:14px;border-radius:16px;background:var(--fill2);text-decoration:none;color:inherit;transition:background .15s,transform .15s}
+.pcard:hover{background:var(--g-w);transform:translateY(-2px)}
+.pcard .tx{display:grid;gap:2px;min-width:0}
+.pcard b{font-size:16px;font-weight:700;letter-spacing:-.03em}
+.pcard span.d{font-size:13px;color:var(--t3);line-height:1.45}
+.empty{text-align:center;color:var(--t4);padding:40px 0}
+/* thumbnails */
+.th{width:64px;height:46px;flex:none;border-radius:10px;background:#E6EDE9;display:grid;place-items:center;overflow:hidden}
+.pcard .th{background:#E6EDE9}
+.th i{display:block;font-style:normal;flex:none}
+/* detail */
+.d-head .grp{font-size:14px;font-weight:600;color:var(--g-ink)}
+.d-head h1{margin:2px 0 0;font-size:32px;font-weight:800;letter-spacing:-.04em;line-height:1.25;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.d-head h1 small{font-size:16px;font-weight:600;color:var(--t4);letter-spacing:-.01em}
+.d-head p{margin:10px 0 0;color:var(--t3);font-size:16px;line-height:1.65;max-width:46em}
+.d-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.navbtns{display:flex;gap:6px;flex:none}
+.stage{background:var(--fill2);border-radius:16px;padding:28px;position:relative;overflow:hidden;min-height:200px}
+.readout{margin-top:16px;background:var(--g-w);border-radius:12px;padding:12px 16px;font-size:14px;color:var(--g-ink);font-weight:500;min-height:46px;font-variant-numeric:tabular-nums}
+.try{margin-top:16px;display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--t3)}
+.try b{flex:none;color:var(--g-ink)}
+/* rail */
+.rail{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;display:grid;gap:12px;scrollbar-width:thin}
+.rail .panel{padding:22px}
+.rail h2{margin:0 0 8px;font-size:16px;font-weight:700}
+.rail p{margin:0;color:var(--t2);font-size:14px;line-height:1.7}
+.prompt{background:var(--fill);border-radius:14px;padding:16px;margin-top:4px}
+.prompt p{margin:0 0 14px;color:var(--t1)}
+.rules{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.rules li{display:grid;grid-template-columns:64px 1fr;gap:10px;font-size:14px;line-height:1.55;color:var(--t2)}
+.rules b{color:var(--g-ink);font-size:13px}
+.used{display:flex;flex-wrap:wrap;gap:6px}
+.used a{display:inline-flex;align-items:center;height:30px;padding:0 10px;border-radius:8px;background:var(--fill);color:var(--t2);font-size:13px;font-weight:600;text-decoration:none}
+.used a:hover{background:var(--g-w);color:var(--g-ink)}
+.mback{display:none}
+/* overlays shared by modal / toast demos */
+.toasts{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:grid;gap:8px;z-index:60;width:min(420px,calc(100% - 32px))}
+.toast{background:var(--t1);color:#fff;border-radius:14px;padding:14px 18px;font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:12px;animation:tin .25s ease-out}
+.toast button{border:0;background:transparent;color:var(--g-2);font-weight:700;cursor:pointer;font-size:15px}
+@keyframes tin{from{transform:translateY(12px);opacity:0}}
+.ov{position:fixed;inset:0;background:rgba(22,32,27,.45);display:grid;place-items:center;z-index:50;padding:20px}
+.dlg{background:#fff;border-radius:20px;padding:26px;width:min(380px,100%);display:grid;gap:10px;animation:tin .2s ease-out}
+.dlg h3{margin:0;font-size:19px}
+.dlg p{margin:0;color:var(--t3);font-size:15px}
+@media (max-width:1240px){
+  .app{grid-template-columns:260px minmax(0,1fr)}
+  .rail{position:static;max-height:none;grid-column:2;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .hero-row{grid-template-columns:1fr}
+}
+@media (max-width:820px){
+  .app,.app.home{grid-template-columns:minmax(0,1fr);padding-block:12px}
+  .side{position:static;max-height:none}
+  .app:not(.home) .side{display:none}
+  .rail{grid-column:1}
+  .mback{display:inline-flex}
+  .panel{padding:20px}
+  .stage{padding:20px}
+  .hero h1{font-size:28px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<style>.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:560px){.cols2{grid-template-columns:1fr}}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;display:inline-block;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ck{display:flex;gap:10px;align-items:center;min-height:44px;padding:0 12px;border-radius:10px;background:#fff;cursor:pointer;font-size:15px}
+.ck.done span{text-decoration:line-through;color:var(--t5)}
+.swrow{display:flex;justify-content:space-between;align-items:center;min-height:52px;padding:0 14px;background:#fff;border-radius:12px}
+.sw{width:50px;height:30px;border-radius:999px;border:0;background:var(--t5);position:relative;cursor:pointer;flex:none;transition:background .2s}
+.sw i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw[aria-checked=true]{background:var(--g)}
+.sw[aria-checked=true] i{transform:translateX(20px)}
+.box2{background:#fff;border-radius:12px;padding:14px 16px}
+.mlist{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}
+.mlist li{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:40px;padding:0 12px;border-radius:10px;background:#fff;transition:opacity .2s}
+.box2 .mlist li{background:var(--fill2)}
+.mlist li.dim{opacity:.3}
+.mlist li.emp{justify-content:center;color:var(--t4);background:transparent;border:1.5px dashed var(--line);min-height:64px}
+.chipb{border:0;height:38px;padding:0 16px;border-radius:999px;background:#fff;color:var(--t3);font-size:14px;font-weight:600;cursor:pointer;box-shadow:inset 0 0 0 1.5px var(--line)}
+.chipb[aria-pressed=true]{background:var(--g-ink);color:#fff;box-shadow:none}
+.segc{display:flex;background:#E1E8E4;border-radius:12px;padding:4px;gap:4px}
+.segc button{flex:1;border:0;background:transparent;height:40px;border-radius:9px;font-size:14px;font-weight:600;color:var(--t4);cursor:pointer}
+.segc button[aria-pressed=true]{background:#fff;color:var(--t1)}
+.bign{font-size:40px;font-weight:800;letter-spacing:-.04em;line-height:1.15;font-variant-numeric:tabular-nums}
+.fld{display:grid;gap:6px}
+.fld .input{background:#fff}
+.fld.bad .input{outline:2px solid var(--red);outline-offset:-2px}
+.err{color:var(--red);font-size:13px;font-weight:600}
+.stepper{display:flex;gap:6px;align-items:center}
+.stepper .btn{width:48px;height:48px;padding:0;font-size:20px;background:#fff}
+.stepper .btn:disabled{background:var(--fill)}
+.stepper .input{width:80px;text-align:center;background:#fff;font-size:18px;font-weight:700}
+.cardrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.dcard{background:#fff;border-radius:16px;padding:16px;display:grid;gap:6px;justify-items:start;box-shadow:0 2px 10px rgba(22,32,27,.07);transition:box-shadow .2s,background .2s}
+.dcard p{margin:0;color:var(--t4);font-size:14px}
+.dcard.flat{box-shadow:none;background:transparent;padding-inline:0}
+.zlist{list-style:none;margin:0;padding:0;display:grid}
+.zlist li{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:48px;padding:0 14px;border-radius:10px}
+.zlist li:nth-child(odd){background:#fff}
+.tw{overflow-x:auto}
+.dt{width:100%;min-width:380px;border-collapse:collapse;font-size:15px;background:#fff;border-radius:12px;overflow:hidden}
+.dt th,.dt td{padding:12px 14px;text-align:right}
+.dt th:first-child,.dt td:first-child{text-align:left}
+.dt th{font-size:13px;color:var(--t4);font-weight:600;background:var(--fill)}
+.dt td{border-top:1px solid var(--line)}
+.dt .up{color:var(--g-ink);font-weight:600} .dt .dn{color:var(--red);font-weight:600}
+.dt .sum td{font-weight:800;background:var(--fill2)}
+.badge{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--red);color:#fff;font-size:12px;font-weight:700}
+.progw{display:flex;gap:28px;align-items:center;flex-wrap:wrap}
+.pbar{height:12px;background:#fff;border-radius:6px;overflow:hidden}
+.pbar span{display:block;height:100%;background:var(--g);border-radius:6px;transition:width .3s ease-out}
+.pring{width:110px;height:110px;flex:none}
+#pc{transition:stroke-dashoffset .3s ease-out}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:#fff;border-radius:16px;padding:16px;display:grid;gap:2px}
+.kpi b{font-size:32px;font-weight:800;letter-spacing:-.04em;line-height:1.2}
+.kpi b small{font-size:15px;font-weight:600;margin-left:2px;color:var(--t3)}
+.kpi .up{color:var(--g-ink);font-size:13px;font-weight:600} .kpi .dn{color:var(--red);font-size:13px;font-weight:600}
+.emptyb{display:grid;justify-items:center;text-align:center;gap:6px;padding:28px 16px;background:#fff;border-radius:16px}
+.emptyb p{margin:0 0 8px;color:var(--t4);font-size:14px}
+.eic{width:44px;height:44px;border-radius:12px;border:2px dashed var(--t5);margin-bottom:6px}
+.acc{display:grid;gap:6px}
+.acc-i{background:#fff;border-radius:12px;overflow:hidden}
+.acc-h{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;border:0;background:transparent;padding:14px 16px;font-size:15px;font-weight:600;cursor:pointer;text-align:left}
+.acc-h i{font-style:normal;color:var(--g-ink);font-size:18px;flex:none}
+.acc-b{padding:0 16px 16px;color:var(--t3);font-size:14px;line-height:1.6}
+.bchart{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end;height:200px;background:#fff;border-radius:14px;padding:14px}
+.bcol{border:0;background:transparent;display:grid;gap:4px;justify-items:center;align-self:end;cursor:pointer;padding:0}
+.bcol span{width:100%;max-width:36px;background:var(--g-2);border-radius:6px 6px 2px 2px;transition:height .3s}
+.bcol.td span{background:var(--g)}
+.bcol:hover span{background:var(--g-ink)}
+.bcol small{font-size:12px;color:var(--t4)}
+.hgrid{display:grid;grid-template-rows:repeat(7,16px);grid-auto-flow:column;grid-auto-columns:16px;gap:4px;width:max-content;background:#fff;padding:12px;border-radius:12px}
+.hc{width:16px;height:16px;border-radius:4px;border:0;padding:0;background:#E1E8E4;cursor:pointer;display:inline-block}
+.hc[data-l="1"]{background:var(--g-3)} .hc[data-l="2"]{background:var(--g)} .hc[data-l="3"]{background:var(--g-ink)}
+.hc.td{box-shadow:0 0 0 2px var(--t1)}
+i.hc{cursor:default;width:12px;height:12px}
+.tlbar{position:relative;height:40px;background:#fff;border-radius:10px;overflow:hidden}
+.tlbar .seg{position:absolute;top:0;bottom:0;border:0;padding:0;cursor:pointer}
+.tlbar .seg:hover{filter:brightness(.9)}
+.ticks{display:flex;justify-content:space-between;font-size:12px;color:var(--t4)}
+.lg{width:12px;height:12px;border-radius:3px;display:inline-block}
+.tipw{position:relative;display:inline-flex}
+.tipb{width:22px;height:22px;border-radius:50%;border:0;background:#fff;color:var(--t3);font-size:12px;font-weight:800;cursor:pointer;box-shadow:inset 0 0 0 1.5px var(--line)}
+.tip{position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);background:var(--t1);color:#fff;font-size:13px;padding:8px 12px;border-radius:10px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:3}
+.tip::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--t1)}
+.tipw:hover .tip,.tipb:focus-visible + .tip,.tipb:focus + .tip{opacity:1;pointer-events:auto}
+.drw-wrap{position:relative;min-height:280px;background:#fff;border-radius:14px;overflow:hidden}
+.drw-main{padding:18px}
+.lnk{border:0;background:transparent;padding:0;cursor:pointer;font-size:15px;text-align:left}
+.drw-ov{position:absolute;inset:0;background:rgba(22,32,27,.35)}
+.drw{position:absolute;top:0;right:0;bottom:0;width:min(240px,80%);background:#fff;padding:18px;display:grid;align-content:start;gap:8px;transform:translateX(100%);transition:transform .22s ease-out;box-shadow:-8px 0 24px rgba(22,32,27,.12)}
+.drw.in{transform:none}
+.drw .ck{background:var(--fill2)}
+.phone{width:min(320px,100%);height:260px;background:#fff;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:inset 0 0 0 1.5px var(--line)}
+.pbarr{height:56px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 14px;background:#fff;box-shadow:0 1px 0 var(--line);position:relative;z-index:1}
+.pscroll{overflow-y:auto;padding:10px 14px;display:grid;gap:8px}
+.pitem{background:var(--fill2);border-radius:10px;padding:12px 14px;font-size:14px}
+.sbw{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;background:#fff;border-radius:14px;padding:12px;min-height:200px}
+@media (max-width:520px){.sbw{grid-template-columns:1fr}.sbn{flex-direction:row;flex-wrap:wrap}}
+.sbn{display:flex;flex-direction:column;gap:4px}
+.sbn button{border:0;background:transparent;text-align:left;padding:10px 12px;border-radius:10px;font-size:15px;cursor:pointer;color:var(--t2)}
+.sbn button:hover{background:var(--fill2)}
+.sbn button[aria-current=page]{background:var(--g-w);color:var(--g-ink);font-weight:700}
+.sbc{background:var(--fill2);border-radius:10px;padding:16px}
+.sbc p{margin:6px 0 0;color:var(--t3);font-size:14px}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line)}
+.tabs button{border:0;background:transparent;padding:12px 16px;font-size:15px;font-weight:600;color:var(--t4);cursor:pointer;margin-bottom:-2px;border-bottom:2px solid transparent}
+.tabs button[aria-selected=true]{color:var(--g-ink);border-bottom-color:var(--g)}
+.tabp{padding:18px 4px;font-size:15px;color:var(--t2)}
+</style>
+</head>
+<body>
+<div class="app home" id="app">
+  <aside class="side" aria-label="부품 목록">
+    <button class="brand" id="brand"><b>UI 체험관</b><span>부품 <span class="num" id="total"></span>가지</span></button>
+    <input class="input" id="q" type="search" placeholder="부품 이름으로 찾기" aria-label="부품 검색">
+    <nav class="nav" id="nav"></nav>
+  </aside>
+
+  <main class="main">
+    <div id="home" class="stack" style="gap:20px">
+      <section class="panel hero">
+        <div class="hero-row">
+          <div>
+            <h1>화면은 부품으로 만들어져요</h1>
+            <p>버튼, 입력창, 진행바처럼 화면을 이루는 부품을 직접 눌러보는 사전이에요. 부품 이름을 알면 AI에게 "여기에 슬라이더 넣어줘"처럼 정확하게 말할 수 있어요. 하고 싶은 걸 고르면 맞는 부품만 남아요.</p>
+            <div class="sit"><span class="label">이럴 땐 어떤 부품?</span><div class="pills" id="sits" role="group" aria-label="상황 고르기"></div></div>
+          </div>
+          <div class="how"><b>이렇게 써요</b><ol><li>만들고 싶은 화면을 떠올리고 위에서 상황을 골라요.</li><li>부품을 눌러 직접 만져보고 오른쪽 '언제 쓰나'를 읽어요.</li><li>요청문을 복사해 Claude에게 보내고, 내 내용으로 바꿔 달라고 해요.</li></ol></div>
+        </div>
+      </section>
+      <div class="groups" id="groups"></div>
+    </div>
+
+    <div id="detail" class="stack" style="gap:20px" hidden>
+      <section class="panel d-head">
+        <div class="d-top"><div class="grp" id="d-grp"></div><div class="navbtns"><button class="btn sm mback" id="back">‹ 목록</button><button class="btn sm" id="prev">‹ 이전</button><button class="btn sm" id="next">다음 ›</button></div></div>
+        <h1><span id="d-name"></span><small id="d-en"></small></h1>
+        <p id="d-desc"></p>
+      </section>
+      <section class="panel">
+        <div class="stage" id="demo"></div>
+        <div class="readout" id="ro" aria-live="polite"></div>
+        <div class="try" id="d-tryw"><b>해보세요</b><span id="d-try"></span></div>
+      </section>
+    </div>
+  </main>
+
+  <aside class="rail" id="rail" hidden>
+    <section class="panel"><h2>AI에게 이렇게 말해보세요</h2><div class="prompt"><p id="d-prompt"></p><button class="btn primary block" id="copy">요청문 복사하기</button></div></section>
+    <section class="panel"><h2>언제 쓰나</h2><p id="d-when"></p></section>
+    <section class="panel"><h2>실무 기준 3가지</h2><ul class="rules" id="d-rules"></ul></section>
+    <section class="panel"><h2>헷갈리는 짝</h2><p id="d-pair"></p></section>
+    <section class="panel"><h2>시간관리 도구 체험관에서 쓰인 곳</h2><div class="used" id="d-used"></div><p class="hint" id="d-usedh" style="margin-top:10px"></p></section>
+  </aside>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let _timers = [], _cleanup = [];
+const every = (fn, ms) => { const id = setInterval(fn, ms); _timers.push(id); return id; };
+const later = (fn, ms) => { const id = setTimeout(fn, ms); _timers.push(id); return id; };
+const onLeave = fn => _cleanup.push(fn);
+const leave = () => { _timers.forEach(id => { clearInterval(id); clearTimeout(id); }); _timers = []; _cleanup.forEach(f => { try { f(); } catch (e) {} }); _cleanup = []; $$('.ov').forEach(e => e.remove()); $('#toasts').innerHTML = ''; };
+let ro = () => {};
+function toast(msg, act, ms = 3000) {
+  const t = document.createElement('div'); t.className = 'toast';
+  t.innerHTML = `<span>${esc(msg)}</span>${act ? `<button>${esc(act[0])}</button>` : ''}`;
+  if (act) $('button', t).onclick = () => { act[1](); t.remove(); };
+  $('#toasts').appendChild(t); setTimeout(() => t.remove(), ms);
+}
+const PARTS = [];
+const part = p => PARTS.push(p);
+</script>
+<script>/* ========== 누르는 것 ========== */
+part({
+  slug: 'button', group: '누르는 것', name: '버튼', en: 'Button', thumb: 'button',
+  short: '누르면 어떤 일이 실행돼요', sits: ['무언가 실행하게'],
+  desc: '누르면 저장, 삭제, 시작 같은 일이 실행되는 부품이에요. 가장 중요한 일은 색이 꽉 찬 버튼으로, 되돌리는 일은 테두리만 있는 버튼으로 강조를 나눠요.',
+  ro0: '아직 누르지 않았어요.',
+  try: '"기록 저장"을 눌러보세요. 저장하는 동안에는 다시 못 누르게 잠겨요.',
+  when: '저장, 삭제, 시작처럼 확정하는 동작에 써요. 색이 꽉 찬 버튼은 한 화면에 하나만 두는 게 좋아요.',
+  rules: [['크기', '손가락으로 누를 자리가 가로세로 44px 이상'], ['상태', '기본, 마우스 올림, 눌림, 비활성, 로딩 다섯 가지를 다 만들기'], ['글자', '"확인"보다 "저장"처럼 하는 일을 동사로. 결과 안내도 "저장됐어요"']],
+  pair: '버튼 vs 링크. 버튼은 이 화면에서 일을 실행하고, 링크는 다른 화면이나 페이지로 옮겨가요. 누르면 이동만 하면 링크로 만들어요.',
+  prompt: '색이 꽉 찬 "기록 저장" 버튼과 테두리만 있는 "취소" 버튼을 나란히 만들어줘. 저장을 누르면 "저장 중…"으로 바뀌고 다시 못 누르게 잠갔다가 1초 뒤에 "저장됐어요" 알림을 보여줘. 버튼 높이는 44px 이상으로 해줘.',
+  used: [['생각 수집함', 'capture'], ['답장 대기함', 'waiting'], ['집중 타이머', 'timer'], ['매일 칸 채우기', 'streak']],
+  render(el) {
+    let n = 0;
+    el.innerHTML = `<div class="stack" style="gap:20px"><div class="row"><button class="btn primary" id="sv">기록 저장</button><button class="btn ghost" id="cc">취소</button></div>
+      <div><div class="label" style="margin-bottom:8px">버튼의 다섯 가지 상태</div><div class="row states"><button class="btn primary sm" tabindex="-1">기본</button><button class="btn primary sm" style="background:var(--g-d)" tabindex="-1">마우스 올림</button><button class="btn primary sm" style="background:var(--g-ink);transform:scale(.97)" tabindex="-1">눌림</button><button class="btn sm" disabled>비활성</button><button class="btn primary sm" tabindex="-1"><i class="spin"></i>저장 중…</button></div></div></div>`;
+    $('#sv', el).onclick = e => { const b = e.target; b.disabled = true; b.innerHTML = '<i class="spin"></i>저장 중…'; ro('저장하는 중이라 버튼이 잠겼어요. 두 번 눌리는 걸 막아요.'); later(() => { b.disabled = false; b.textContent = '기록 저장'; n++; ro(`저장 ${n}번 · 채워진 버튼이 이 화면의 주인공이에요.`); toast('저장됐어요'); }, 1000); };
+    $('#cc', el).onclick = () => ro('취소 · 되돌리는 동작은 테두리만 있는 낮은 강조로 둬요.');
+  }
+});
+
+part({
+  slug: 'check', group: '누르는 것', name: '체크박스 · 라디오', en: 'Checkbox · Radio', thumb: 'checkbox',
+  short: '눌러서 표시를 남겨요. 여러 개 또는 하나만', sits: ['여러 개 고르게', '하나만 고르게'],
+  desc: '둘 다 눌러서 표시만 남기는 부품이에요. 체크박스는 여러 개를 고를 수 있고, 동그란 라디오는 그중 하나만 골라져요.',
+  try: '할 일을 몇 개 체크하고 아래 반복 설정을 바꿔보세요. 라디오는 하나를 고르면 나머지가 자동으로 풀려요.',
+  when: '눌러도 바로 무슨 일이 일어나지 않고 표시만 남을 때 써요. 여러 개면 체크박스, 하나만이면 라디오예요. 누르는 즉시 실행돼야 하면 토글 스위치를 써요.',
+  rules: [['연결', '글자를 눌러도 체크되게 네모와 글자를 하나로 묶기'], ['높이', '한 줄 전체 높이 44px 이상'], ['집계', '"4개 중 2개 완료"처럼 세어서 보여주기']],
+  pair: '체크박스 vs 토글 스위치. 체크박스는 "표시"라서 저장 버튼을 눌러야 반영되고, 토글은 켜는 순간 바로 적용돼요.',
+  prompt: '할 일 목록 각 줄 왼쪽에 체크박스를 넣고 글자를 눌러도 체크되게 해줘. 체크하면 글자에 가로줄을 긋고, 맨 아래에 "4개 중 2개 완료"처럼 세어서 보여줘. 그 아래에는 \'반복 안 함, 매주, 평일만\' 중 하나만 고르는 라디오 버튼을 넣어줘.',
+  used: [['급한 일·중요한 일 나누기', 'matrix'], ['하루 9칸 할 일', 'nine'], ['할 일 쪼개기', 'breakdown'], ['하루 열고 닫기', 'openclose']],
+  render(el) {
+    const T = ['수요일 오전 원고 2매', '거래처 회신', '주간 회고 20분', '산책 30분'];
+    el.innerHTML = `<div class="cols2"><div><div class="label" style="margin-bottom:8px">체크박스 · 여러 개 고를 수 있어요</div><div class="stack" style="gap:4px" id="cb">${T.map((t, i) => `<label class="ck"><input type="checkbox" ${i === 1 ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div></div>
+      <div><div class="label" style="margin-bottom:8px">라디오 · 하나만 골라져요</div><div class="stack" style="gap:4px" id="rb">${['반복 안 함', '매주', '평일만'].map((t, i) => `<label class="ck"><input type="radio" name="rp" value="${t}" ${i === 0 ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div></div></div>`;
+    const up = () => { const c = $$('#cb input', el), n = c.filter(x => x.checked).length; c.forEach(x => x.closest('.ck').classList.toggle('done', x.checked)); ro(`${c.length}개 중 ${n}개 완료 · 반복: ${$('#rb input:checked', el).value}`); };
+    el.onchange = up; up();
+  }
+});
+
+part({
+  slug: 'toggle', group: '누르는 것', name: '토글 스위치', en: 'Toggle switch', thumb: 'switch',
+  short: '켜는 순간 바로 적용되는 스위치', sits: ['켜고 끄게'],
+  desc: '전등 스위치처럼 켜고 끄는 부품이에요. 누르는 순간 바로 적용되고 따로 저장 버튼이 필요 없어요.',
+  try: '"집중 모드"를 켜보세요. 저장을 누르지 않아도 바로 아래 목록이 바뀌어요.',
+  when: '설정을 켜고 끌 때, 그리고 그 결과가 바로 보여야 할 때 써요. 알림 받기, 다크 모드, 주말 숨기기 같은 곳이에요.',
+  rules: [['즉시', '켜는 순간 적용. 저장 버튼과 같이 두지 않기'], ['글자', '"알림 받기"처럼 켜졌을 때의 상태를 이름으로'], ['표시', '색만으로 구분하지 말고 손잡이 위치도 바뀌게']],
+  pair: '토글 스위치 vs 토글 버튼. 스위치는 설정 하나를 켜고 끄고, 토글 버튼은 누를 때마다 눌림/안 눌림이 바뀌는 버튼이에요. 체험관 시간 기록기의 일 종류 버튼이 토글 버튼이에요.',
+  prompt: '설정 화면에 토글 스위치 세 개를 만들어줘. \'알림 받기\', \'주말 숨기기\', \'집중 모드\'. 켜면 초록색으로 바뀌고 손잡이가 오른쪽으로 움직이게 해줘. 저장 버튼 없이 누르는 순간 바로 적용되게 하고, 집중 모드를 켜면 할 일 목록에서 오늘 할 일 하나만 남기고 흐리게 해줘.',
+  used: [['하루 시간표 칠하기', 'dayplan'], ['시간 기록기', 'tracker'], ['SNS 시간 예산', 'sns']],
+  usedNote: '',
+  render(el) {
+    const S = [['알림 받기', true], ['주말 숨기기', false], ['집중 모드', false]];
+    el.innerHTML = `<div class="cols2"><div class="stack" style="gap:6px" id="sw">${S.map(([n, on], i) => `<div class="swrow"><span id="swl${i}">${n}</span><button class="sw" role="switch" aria-checked="${on}" aria-labelledby="swl${i}" data-i="${i}"><i></i></button></div>`).join('')}</div>
+      <div class="box2"><div class="label">이번 주 할 일</div><ul class="mlist" id="ml">${['월 · 원고 2매', '화 · 거래처 회신', '수 · 90분 집중', '토 · 산책', '일 · 쉼'].map(t => `<li data-we="${/^[토일]/.test(t)}">${t}</li>`).join('')}</ul></div></div>`;
+    const up = () => { const on = $$('.sw', el).map(b => b.getAttribute('aria-checked') === 'true'); $$('#ml li', el).forEach((li, i) => { li.hidden = on[1] && li.dataset.we === 'true'; li.classList.toggle('dim', on[2] && i !== 2); }); ro(`알림 ${on[0] ? '켜짐' : '꺼짐'} · 주말 ${on[1] ? '숨김' : '보임'} · 집중 모드 ${on[2] ? '켜짐' : '꺼짐'}`); };
+    el.onclick = e => { const b = e.target.closest('.sw'); if (!b) return; b.setAttribute('aria-checked', b.getAttribute('aria-checked') !== 'true'); up(); };
+    up();
+  }
+});
+
+part({
+  slug: 'chip', group: '누르는 것', name: '칩', en: 'Chip', thumb: 'chip',
+  short: '알약 모양 작은 버튼. 걸러내기에 써요', sits: ['여러 개 고르게', '하나만 고르게'],
+  desc: '알약 모양으로 생긴 작은 버튼이에요. 여러 개를 나란히 두고 눌러서 켜고 끄며 목록을 걸러낼 때 많이 써요. 생김새는 태그와 같지만 누를 수 있다는 점이 달라요.',
+  try: '칩을 전부 꺼보세요. 결과가 0개가 되면 빈 상태 화면이 왜 필요한지 보여요.',
+  when: '목록을 분류별로 걸러보거나, 몇 가지 선택지 중에 빠르게 고르게 할 때 써요.',
+  rules: [['상태', '켜짐을 색만으로 구분하지 말고 체크 표시도 같이'], ['구조', '누를 수 있으니 반드시 버튼으로 만들기'], ['연결', '전부 끄면 결과가 0개. 빈 상태 화면을 같이 만들기']],
+  pair: '칩 vs 태그. 칩은 눌러서 고르는 버튼, 태그는 붙어 있기만 한 라벨이에요. 누를 수 있으면 칩, 보기만 하면 태그예요.',
+  prompt: '분류 칩 네 개(업무, 창작, 운동, 쉼)를 알약 모양으로 만들어줘. 누르면 색이 차고 체크 표시가 붙게, 다시 누르면 빠지게 해줘. 켜진 분류의 할 일만 아래 목록에 남기고, 전부 꺼지면 "보여줄 할 일이 없어요"를 띄워줘.',
+  used: [['하루 시간표 칠하기', 'dayplan'], ['주간 고정 시간표', 'weekly'], ['매일 칸 채우기', 'streak']],
+  render(el) {
+    const C = ['업무', '창작', '운동', '쉼'], L = [['원고 2매', '창작'], ['거래처 회신', '업무'], ['견적서 보내기', '업무'], ['스트레칭', '운동'], ['낮잠 20분', '쉼']];
+    const on = new Set(C);
+    const draw = () => {
+      $('#cp', el).innerHTML = C.map(c => `<button class="chipb" aria-pressed="${on.has(c)}" data-c="${c}">${on.has(c) ? '✓ ' : ''}${c}</button>`).join('');
+      const v = L.filter(x => on.has(x[1]));
+      $('#cl', el).innerHTML = v.length ? v.map(x => `<li><span>${x[0]}</span><span class="tag">${x[1]}</span></li>`).join('') : '<li class="emp">보여줄 할 일이 없어요. 위에서 분류를 켜보세요.</li>';
+      ro(v.length ? `켜진 분류: ${[...on].join(', ')} · 할 일 ${v.length}개` : '전부 꺼짐 → 결과 0개 → 빈 상태 화면이 필요해요');
+    };
+    el.innerHTML = `<div class="stack"><div class="row" id="cp"></div><ul class="mlist" id="cl"></ul></div>`;
+    el.onclick = e => { const b = e.target.closest('.chipb'); if (!b) return; const c = b.dataset.c; on.has(c) ? on.delete(c) : on.add(c); draw(); };
+    draw();
+  }
+});
+
+part({
+  slug: 'segment', group: '누르는 것', name: '세그먼트 컨트롤', en: 'Segmented control', thumb: 'seg',
+  short: '붙어 있는 버튼 중 하나만 골라요', sits: ['하나만 고르게', '화면 나누고 옮기기'],
+  desc: '버튼 두세 개를 한 줄로 붙여놓고 그중 하나만 고르는 부품이에요. 고른 칸이 하얗게 떠올라요. 보는 방식이나 모드를 바꿀 때 써요.',
+  try: '"이번 주"와 "이번 달"을 눌러보세요. 같은 자리에서 숫자만 바뀌어요.',
+  when: '선택지가 2~4개이고 짧을 때, 고르는 즉시 결과가 바뀌어야 할 때 써요. 기간 고르기(오늘/이번 주/이번 달), 타이머 모드 고르기가 대표적이에요.',
+  rules: [['개수', '2~4개. 그보다 많으면 드롭다운'], ['글자', '한두 단어로 짧게. 칸 너비를 똑같이'], ['즉시', '고르는 순간 아래 내용이 바뀌게']],
+  pair: '세그먼트 컨트롤 vs 탭. 세그먼트는 같은 내용을 보는 방식(값)을 바꾸고, 탭은 아예 다른 내용 묶음으로 옮겨가요. 라디오 버튼과는 역할이 같고 생김새만 달라요.',
+  prompt: '\'오늘, 이번 주, 이번 달\' 세 칸짜리 세그먼트 컨트롤을 만들어줘. 회색 바탕 위에 고른 칸만 하얗게 떠오르게 하고, 고르는 순간 아래 집중 시간 숫자가 그 기간 값으로 바뀌게 해줘.',
+  used: [['집중 타이머', 'timer'], ['컨디션 일지', 'condition'], ['휴식 메뉴판', 'breakmenu']],
+  render(el) {
+    const V = { '오늘': ['2시간 30분', '어제보다 30분 많아요'], '이번 주': ['14시간', '목표 20시간의 70%'], '이번 달': ['52시간', '지난달보다 6시간 많아요'] };
+    el.innerHTML = `<div class="stack" style="max-width:420px"><div class="segc" id="sg">${Object.keys(V).map((k, i) => `<button aria-pressed="${i === 0}">${k}</button>`).join('')}</div><div><div class="label">집중 시간</div><div class="bign" id="v"></div><div class="hint" id="v2"></div></div></div>`;
+    const set = k => { $$('#sg button', el).forEach(b => b.setAttribute('aria-pressed', b.textContent === k)); $('#v', el).textContent = V[k][0]; $('#v2', el).textContent = V[k][1]; ro(`고른 기간: ${k} · 같은 자리에서 값만 바뀌어요`); };
+    el.onclick = e => { const b = e.target.closest('#sg button'); if (b) set(b.textContent); };
+    set('오늘');
+  }
+});
+
+/* ========== 적는 것 ========== */
+part({
+  slug: 'input', group: '적는 것', name: '입력창 · 글상자', en: 'Input · Textarea', thumb: 'input',
+  short: '한 줄은 입력창, 여러 줄은 글상자', sits: ['글을 적게'],
+  desc: '글을 쓰는 칸이에요. 한 줄이면 입력창, 여러 줄이면 글상자라고 불러요. 무엇을 쓰는 칸인지 알려주는 이름표는 칸 위에 붙여요.',
+  try: '할 일 이름을 지우고 "저장 시도"를 눌러보세요. 오류를 보여주는 모습이 이 부품의 절반이에요.',
+  when: '사용자가 직접 글을 써야 할 때 써요. 고를 게 정해져 있으면 드롭다운이 더 빨라요.',
+  rules: [['이름표', '칸 안의 흐린 안내글(placeholder)은 이름표를 대신하지 못해요'], ['오류', '빨간색만으로 알리지 말고 글자로도 함께'], ['위치', '안내와 오류 문구는 칸 바로 아래']],
+  pair: '입력창 vs 드롭다운. 자유롭게 적어야 하면 입력창, 선택지가 정해져 있으면 드롭다운이에요.',
+  prompt: '"할 일 이름" 이름표가 칸 위에 붙은 입력창과 그 아래 "메모" 글상자(2줄)를 만들어줘. 할 일 이름이 빈 채로 저장하면 테두리를 빨갛게 하고 칸 아래에 "할 일 이름을 적어주세요"를 글자로 띄워줘.',
+  used: [['생각 수집함', 'capture'], ['답장 대기함', 'waiting'], ['하루 열고 닫기', 'openclose'], ['해낸 일 목록', 'done']],
+  render(el) {
+    el.innerHTML = `<div class="stack" style="max-width:440px"><div class="fld" id="ft"><label class="label" for="it">할 일 이름</label><input class="input" id="it" value="원고 2매 쓰기"><span class="err" hidden>할 일 이름을 적어주세요</span></div><div class="fld"><label class="label" for="im">메모</label><textarea class="input" id="im" rows="2" placeholder="필요하면 적어요"></textarea></div><button class="btn primary" id="tr" style="justify-self:start">저장 시도</button></div>`;
+    const echo = () => { const t = $('#it', el).value.trim(), m = $('#im', el).value.trim(); ro(t ? `저장될 값 · ${t}${m ? ' / ' + m : ''}` : '이름이 비어 있어요. 저장 시도를 눌러 오류 모습을 확인해요.'); };
+    el.oninput = () => { $('#ft', el).classList.remove('bad'); $('.err', el).hidden = true; echo(); };
+    $('#tr', el).onclick = () => { if (!$('#it', el).value.trim()) { $('#ft', el).classList.add('bad'); $('.err', el).hidden = false; $('#it', el).focus(); ro('저장이 막혔어요 · 빨간 테두리와 글자 두 가지로 알려요'); } else { toast('저장됐어요'); echo(); } };
+    echo();
+  }
+});
+
+part({
+  slug: 'select', group: '적는 것', name: '드롭다운', en: 'Select · Dropdown', thumb: 'select',
+  short: '펼쳐서 정해진 것 중 하나를 골라요', sits: ['하나만 고르게'],
+  desc: '누르면 목록이 펼쳐지고 그중 하나를 고르는 칸이에요. 선택지가 미리 정해져 있을 때 써요.',
+  try: '분류와 반복을 바꿔보세요. 고른 값이 칸에 그대로 남아요.',
+  when: '선택지가 4개 이상이고 정해져 있을 때 써요. 2~3개면 라디오나 세그먼트 컨트롤이 더 빨라요.',
+  rules: [['기본값', '가장 자주 고르는 값을 미리 골라두기'], ['개수', '7개가 넘으면 검색창을 함께'], ['순서', '자주 고르는 순서가 먼저. 가나다순은 마지막 방법']],
+  pair: '드롭다운 vs 메뉴. 고른 값이 칸에 남으면 드롭다운, 누르자마자 동작이 실행되면(예: 수정, 삭제) 메뉴예요.',
+  prompt: '"분류" 드롭다운에 업무, 창작, 운동, 쉼을 넣고, 아래 "반복" 드롭다운에 안 함, 매주, 평일만을 넣어줘. 기본값은 업무와 안 함으로 미리 골라둬.',
+  used: [['급한 일·중요한 일 나누기', 'matrix']],
+  render(el) {
+    el.innerHTML = `<div class="cols2" style="max-width:460px"><div class="fld"><label class="label" for="s1">분류</label><select class="input" id="s1">${['업무', '창작', '운동', '쉼'].map(x => `<option>${x}</option>`).join('')}</select></div><div class="fld"><label class="label" for="s2">반복</label><select class="input" id="s2">${['안 함', '매주', '평일만'].map(x => `<option>${x}</option>`).join('')}</select></div></div>`;
+    const up = () => ro(`${$('#s1', el).value} · 반복 ${$('#s2', el).value}`);
+    el.onchange = up; up();
+  }
+});
+
+part({
+  slug: 'slider', group: '적는 것', name: '슬라이더', en: 'Slider', thumb: 'slider',
+  short: '손잡이를 끌어서 양을 정해요', sits: ['숫자나 시간을 정하게'],
+  desc: '막대 위의 동그란 손잡이를 끌어서 값을 정하는 부품이에요. 정확한 숫자보다 "이 정도"를 빠르게 정할 때 좋아요.',
+  try: '손잡이를 끌어보세요. 값이 바뀌는 동안 숫자도 같이 움직여요. 진행바와 생김새는 비슷하지만 직접 움직일 수 있다는 점이 달라요.',
+  when: '하루 목표 시간, 볼륨, 진행률처럼 범위 안에서 대략의 양을 정할 때 써요. 정확한 숫자를 입력해야 하면 숫자 입력이 나아요.',
+  rules: [['숫자', '지금 값을 숫자로 옆에 같이 보여주기'], ['범위', '최솟값과 최댓값, 한 칸 간격을 미리 정하기'], ['손잡이', '손가락으로 잡을 수 있게 지름 20px 이상']],
+  pair: '슬라이더 vs 진행바. 슬라이더는 내가 끌어서 바꾸는 막대, 진행바는 보기만 하는 막대예요. 슬라이더 vs 숫자 입력은 "대략"과 "정확히"의 차이예요.',
+  prompt: '하루 집중 목표를 정하는 슬라이더를 만들어줘. 0분부터 240분까지 30분 간격으로 움직이고, 손잡이 옆에 "2시간 30분"처럼 지금 값을 보여줘. 값에 따라 아래에 "뽀모도로 6개 분량"처럼 바꿔서 알려줘.',
+  used: [['분기 목표판', 'goals'], ['일주일 시간 나눠보기', 'week168']],
+  render(el) {
+    el.innerHTML = `<div class="stack" style="max-width:460px"><div class="row between"><label class="label" for="sl">하루 집중 목표</label><b class="num" id="sv"></b></div><input type="range" id="sl" min="0" max="240" step="30" value="150"><div class="row between hint"><span>0분</span><span>4시간</span></div></div>`;
+    const up = () => { const v = +$('#sl', el).value, t = (Math.floor(v / 60) ? Math.floor(v / 60) + '시간 ' : '') + (v % 60 ? v % 60 + '분' : v ? '' : '0분'); $('#sv', el).textContent = t.trim(); ro(`${t.trim()} · 뽀모도로(25분) ${Math.round(v / 25)}개 분량이에요`); };
+    el.oninput = up; up();
+  }
+});
+
+part({
+  slug: 'datetime', group: '적는 것', name: '날짜 · 시간 선택', en: 'Date · Time picker', thumb: 'date',
+  short: '누르면 달력이나 시계가 떠요', sits: ['숫자나 시간을 정하게'],
+  desc: '누르면 달력이나 시계가 떠서 날짜와 시각을 고르는 칸이에요. 사용자가 "2026.11.24"처럼 직접 타이핑하지 않아도 돼요.',
+  try: '마감일을 바꿔보세요. 오늘부터 며칠 남았는지 바로 계산돼요.',
+  when: '마감일, 약속 시각, 잠든 시각처럼 날짜나 시간을 받아야 할 때 써요. 입력창에 직접 적게 하면 형식이 제각각이라 계산이 어려워져요.',
+  rules: [['기본값', '오늘이나 가장 흔한 시각을 미리 넣어두기'], ['범위', '지난 날짜를 막을지 정하기'], ['보여주기', '고른 뒤에는 "11월 24일 (월)"처럼 읽기 쉬운 형태로']],
+  pair: '날짜 선택 vs 입력창. 날짜를 입력창에 적게 하면 "11/24", "11월24일"처럼 형식이 섞여요. 날짜는 항상 날짜 선택으로 받아요.',
+  prompt: '마감일을 고르는 날짜 선택과 시각을 고르는 시간 선택을 나란히 만들어줘. 기본값은 오늘부터 2주 뒤, 오후 6시로 해줘. 고르면 아래에 "11월 24일 (월) 오후 6시 · 16일 남음"처럼 보여줘.',
+  used: [['마감 역산', 'backward'], ['컨디션 일지', 'condition']],
+  render(el) {
+    const d = new Date(); d.setDate(d.getDate() + 14); const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    el.innerHTML = `<div class="cols2" style="max-width:460px"><div class="fld"><label class="label" for="dd">마감일</label><input class="input" type="date" id="dd" value="${k}"></div><div class="fld"><label class="label" for="dt">시각</label><input class="input" type="time" id="dt" value="18:00"></div></div>`;
+    const up = () => { const v = $('#dd', el).value; if (!v) return; const [y, m, dd] = v.split('-').map(Number), x = new Date(y, m - 1, dd), t0 = new Date(); t0.setHours(0, 0, 0, 0); const left = Math.round((x - t0) / 864e5); const [h, mi] = $('#dt', el).value.split(':').map(Number); ro(`${m}월 ${dd}일 (${'일월화수목금토'[x.getDay()]}) ${h < 12 ? '오전' : '오후'} ${h % 12 || 12}시${mi ? ' ' + mi + '분' : ''} · ${left > 0 ? left + '일 남음' : left === 0 ? '오늘 마감' : -left + '일 지남'}`); };
+    el.onchange = up; el.oninput = up; up();
+  }
+});
+
+part({
+  slug: 'number', group: '적는 것', name: '숫자 입력', en: 'Number input · Stepper', thumb: 'number',
+  short: '− + 버튼으로 숫자를 한 칸씩 바꿔요', sits: ['숫자나 시간을 정하게'],
+  desc: '숫자만 넣는 칸이에요. 양옆의 − + 버튼으로 한 칸씩 올리고 내릴 수 있어서 "스테퍼"라고도 불러요.',
+  try: '+를 여러 번 눌러보세요. 최댓값에 닿으면 버튼이 잠겨요.',
+  when: '인원, 일수, 분처럼 정확한 숫자가 필요하고 범위가 좁을 때 써요. 범위가 넓고 대략이면 슬라이더가 나아요.',
+  rules: [['범위', '최솟값과 최댓값에 닿으면 버튼을 비활성으로'], ['단위', '"분", "일"처럼 단위를 칸 옆에 붙이기'], ['직접 입력', '버튼만 두지 말고 숫자를 직접 고칠 수도 있게']],
+  pair: '숫자 입력 vs 슬라이더. 숫자 입력은 "정확히 3일", 슬라이더는 "대략 이 정도"예요.',
+  prompt: '단계마다 걸리는 일수를 넣는 숫자 입력을 만들어줘. 양옆에 − 와 + 버튼이 있고 1일부터 14일까지만 되게, 끝에 닿으면 버튼을 회색으로 잠가줘. 숫자를 직접 고쳐 쓸 수도 있게 하고 칸 옆에 "일"을 붙여줘.',
+  used: [['마감 역산', 'backward'], ['예상 vs 실제', 'estimate'], ['SNS 시간 예산', 'sns']],
+  render(el) {
+    let v = 3; const MIN = 1, MAX = 14;
+    el.innerHTML = `<div class="stack" style="max-width:360px"><label class="label" for="nv">초안 작업에 걸리는 일수</label><div class="stepper"><button class="btn" id="mn" aria-label="하루 줄이기">−</button><input class="input num" id="nv" type="number" min="${MIN}" max="${MAX}"><button class="btn" id="pl" aria-label="하루 늘리기">+</button><span class="label">일</span></div></div>`;
+    const draw = () => { $('#nv', el).value = v; $('#mn', el).disabled = v <= MIN; $('#pl', el).disabled = v >= MAX; ro(`${v}일 · ${v >= MAX ? '최댓값이라 + 가 잠겼어요' : v <= MIN ? '최솟값이라 − 가 잠겼어요' : '1일부터 14일까지 정할 수 있어요'}`); };
+    $('#mn', el).onclick = () => { v = Math.max(MIN, v - 1); draw(); };
+    $('#pl', el).onclick = () => { v = Math.min(MAX, v + 1); draw(); };
+    $('#nv', el).onchange = e => { v = Math.min(MAX, Math.max(MIN, Math.round(+e.target.value) || MIN)); draw(); };
+    draw();
+  }
+});
+
+/* ========== 보여주는 것 ========== */
+part({
+  slug: 'card', group: '보여주는 것', name: '카드', en: 'Card', thumb: 'card',
+  short: '관계있는 내용을 한 덩어리로 묶는 상자', sits: ['묶어서 늘어놓기'],
+  desc: '관계있는 내용을 한 덩어리로 묶는 상자예요. 시간표의 요일 칸 하나하나가 카드예요.',
+  try: '"경계 빼보기"를 눌러보세요. 상자가 사라지면 어디까지가 한 덩어리인지 흐려져요.',
+  when: '같은 모양의 묶음이 여러 개 반복될 때 써요. 모든 걸 카드로 만들면 아무것도 도드라지지 않아요.',
+  rules: [['경계', '테두리나 그림자 중 하나만'], ['여백', '안쪽 여백 16px부터 시작'], ['중첩', '카드 안에 카드를 또 넣지 않기']],
+  pair: '카드 vs 리스트. 한 항목에 제목, 설명, 태그처럼 정보가 여러 줄이면 카드, 한 줄로 충분하면 리스트예요.',
+  prompt: '요일 칸 하나를 카드로 만들어줘. 그림자만 옅게 넣고 테두리는 없이, 모서리는 둥글게, 안쪽 여백은 16px. 제목은 굵게, 아래 설명은 작고 회색으로, 맨 아래에 태그 한 개를 붙여줘.',
+  used: [['생각 수집함', 'capture'], ['함께 집중하는 방', 'cowork']],
+  render(el) {
+    let flat = false;
+    el.innerHTML = `<div class="stack" style="gap:18px"><div class="cardrow"><article class="dcard" id="c1"><b>수요일 오전</b><p>원고 2매 · 90분 집중</p><span class="tag g">창작</span></article><article class="dcard"><b>목요일 오후</b><p>거래처 회의 2건</p><span class="tag">업무</span></article></div><button class="btn ghost sm" id="fl" style="justify-self:start">경계 빼보기</button></div>`;
+    ro('경계가 있으니 "여기까지가 한 덩어리"가 읽혀요.');
+    $('#fl', el).onclick = e => { flat = !flat; $$('.dcard', el).forEach(c => c.classList.toggle('flat', flat)); e.target.textContent = flat ? '경계 되돌리기' : '경계 빼보기'; ro(flat ? '경계를 빼니 어디까지가 한 덩어리인지 흐려져요.' : '경계가 있으니 "여기까지가 한 덩어리"가 읽혀요.'); };
+  }
+});
+
+part({
+  slug: 'list', group: '보여주는 것', name: '리스트', en: 'List', thumb: 'list',
+  short: '같은 모양의 줄이 세로로 반복돼요', sits: ['묶어서 늘어놓기'],
+  desc: '같은 모양의 줄이 세로로 반복되는 부품이에요. 정보가 줄마다 같은 자리에 있어야 눈으로 훑을 수 있어요.',
+  try: '"한 줄 더 넣기"를 눌러보세요. 시간이 항상 오른쪽 끝에 맞춰져서 훑기 쉬워요.',
+  when: '줄마다 비교할 숫자가 하나일 때 써요. 한 줄에 설명이 두 줄 필요해지면 카드로 넘어가요.',
+  rules: [['높이', '한 줄 높이 44px 이상'], ['구분', '구분선이나 줄무늬 중 하나만'], ['정렬', '숫자는 오른쪽 끝에 고정']],
+  pair: '리스트 vs 표. 줄마다 숫자가 하나면 리스트, 둘 이상을 나란히 비교하면 표예요.',
+  prompt: '할 일 리스트를 만들어줘. 줄마다 왼쪽에 이름, 오른쪽 끝에 걸리는 시간을 두고, 홀수 줄에만 옅은 배경을 깔고 구분선은 빼줘. 줄 높이는 44px 이상.',
+  used: [['답장 대기함', 'waiting'], ['시간 기록기', 'tracker'], ['해낸 일 목록', 'done'], ['예상 vs 실제', 'estimate']],
+  render(el) {
+    const L = [['원고 2매', '90분'], ['거래처 회신', '20분'], ['주간 회고', '20분'], ['산책', '30분']], X = [['독서', '30분'], ['장보기', '40분'], ['메일 정리', '15분']];
+    let k = 0;
+    const draw = () => { $('#ll', el).innerHTML = L.map(([a, b]) => `<li><span>${a}</span><span class="num">${b}</span></li>`).join(''); ro(`${L.length}줄 · 합계 ${L.reduce((s, x) => s + parseInt(x[1]), 0)}분`); };
+    el.innerHTML = `<div class="stack" style="max-width:440px"><ul class="zlist" id="ll"></ul><button class="btn ghost sm" id="ad" style="justify-self:start">한 줄 더 넣기</button></div>`;
+    $('#ad', el).onclick = () => { if (k >= X.length) { toast('더 넣을 예시가 없어요'); return; } L.push(X[k++]); draw(); };
+    draw();
+  }
+});
+
+part({
+  slug: 'table', group: '보여주는 것', name: '표', en: 'Table', thumb: 'table',
+  short: '숫자를 세로로 줄 세워 비교해요', sits: ['묶어서 늘어놓기', '기록을 한눈에'],
+  desc: '숫자를 가로세로 칸에 줄 세워 비교할 때만 쓰는 부품이에요. 좁은 화면에서 가장 먼저 깨져요.',
+  try: '화면 폭을 줄여보세요. 표만 좌우로 밀리고 화면 전체는 그대로예요.',
+  when: '항목마다 숫자가 둘 이상일 때 써요. 계획 대비 실제가 딱 그 경우예요.',
+  rules: [['정렬', '숫자는 오른쪽 정렬, 자릿수 폭 고정'], ['머리', '맨 윗줄 제목은 본문과 구분되게'], ['모바일', '열은 4개가 한계. 넘으면 표만 가로로 밀리게']],
+  pair: '표 vs 주간 시간표. 주간 시간표처럼 칸을 색으로 채우는 것도 표지만, 숫자를 비교하는 표와 달리 칸 하나하나를 눌러서 바꾸는 그리드에 가까워요.',
+  prompt: '분류, 계획, 실제, 차이 네 열짜리 표를 만들어줘. 숫자는 오른쪽 정렬에 자릿수를 맞추고, 차이 열은 +/− 부호와 색을 함께 보여줘. 합계 줄은 굵게, 폰에서는 표만 좌우로 밀리게 해줘.',
+  used: [['주간 고정 시간표', 'weekly']],
+  render(el) {
+    const R = [['업무', 20, 23.5], ['창작', 10, 6], ['운동', 3, 3], ['쉼', 7, 4.5]], f = h => `${Math.floor(Math.abs(h))}:${String(Math.round(Math.abs(h) % 1 * 60)).padStart(2, '0')}`;
+    const d = (a, b) => { const x = b - a; return `<td class="num ${x > 0 ? 'up' : x < 0 ? 'dn' : ''}">${x > 0 ? '+' : x < 0 ? '−' : ''}${f(x)}</td>`; };
+    const tp = R.reduce((s, r) => s + r[1], 0), ta = R.reduce((s, r) => s + r[2], 0);
+    el.innerHTML = `<div class="tw"><table class="dt"><thead><tr><th>분류</th><th>계획</th><th>실제</th><th>차이</th></tr></thead><tbody>${R.map(r => `<tr><td>${r[0]}</td><td class="num">${f(r[1])}</td><td class="num">${f(r[2])}</td>${d(r[1], r[2])}</tr>`).join('')}<tr class="sum"><td>합계</td><td class="num">${f(tp)}</td><td class="num">${f(ta)}</td>${d(tp, ta)}</tr></tbody></table></div>`;
+    ro('글자 열은 왼쪽, 숫자 열은 오른쪽 정렬 · 자릿수 폭을 맞춰서 세로로 비교가 돼요');
+  }
+});
+
+part({
+  slug: 'tag', group: '보여주는 것', name: '태그', en: 'Tag · Badge', thumb: 'tag',
+  short: '작은 라벨로 분류나 상태를 붙여요', sits: ['지금 상태 보여주기'],
+  desc: '항목 옆에 붙는 작은 라벨이에요. 분류(업무, 창작)나 상태(진행 중, 마감 임박)를 한눈에 보여줘요. 숫자만 들어간 작은 동그라미는 배지라고 불러요.',
+  try: '할 일 상태를 바꿔보세요. 글자와 색이 같이 바뀌어요.',
+  when: '목록의 각 항목에 분류나 상태를 붙일 때 써요. 누를 수 있게 만들어야 하면 칩을 써요.',
+  rules: [['글자', '한두 단어. 문장을 넣지 않기'], ['색', '색은 의미가 있을 때만. 빨강은 경고, 초록은 완료처럼'], ['개수', '한 항목에 태그는 두세 개까지']],
+  pair: '태그 vs 칩. 태그는 보기만 하는 라벨, 칩은 눌러서 고르는 버튼이에요. 생김새가 같아서 가장 많이 헷갈리는 짝이에요.',
+  prompt: '할 일 목록 각 줄 오른쪽에 상태 태그를 붙여줘. \'진행 중\'은 회색, \'완료\'는 초록, \'마감 임박\'은 빨강으로. 마감까지 3일 이하로 남으면 자동으로 \'마감 임박\'으로 바뀌게 하고, 탭 이름 옆에는 남은 할 일 개수를 숫자 배지로 보여줘.',
+  used: [['답장 대기함', 'waiting'], ['분기 목표판', 'goals'], ['컨디션 일지', 'condition']],
+  render(el) {
+    const L = [['원고 2매', 0], ['거래처 회신', 2], ['견적서 보내기', 1]], ST = [['진행 중', ''], ['완료', 'g'], ['마감 임박', 'red']];
+    const draw = () => { $('#tl', el).innerHTML = L.map(([n, s], i) => `<li><span>${n}</span><span class="row" style="gap:6px"><span class="tag ${ST[s][1]}">${ST[s][0]}</span><button class="btn sm ghost" data-i="${i}">상태 바꾸기</button></span></li>`).join(''); const left = L.filter(x => x[1] !== 1).length; $('#bd', el).textContent = left; ro(`남은 할 일 ${left}개 · 배지 숫자도 같이 바뀌어요`); };
+    el.innerHTML = `<div class="stack" style="max-width:480px"><div class="row"><b>오늘 할 일</b><span class="badge num" id="bd"></span></div><ul class="zlist" id="tl"></ul></div>`;
+    el.onclick = e => { const b = e.target.closest('[data-i]'); if (!b) return; const r = L[+b.dataset.i]; r[1] = (r[1] + 1) % 3; draw(); };
+    draw();
+  }
+});
+
+part({
+  slug: 'progress', group: '보여주는 것', name: '진행바 · 진행 링', en: 'Progress bar · Ring', thumb: 'progress',
+  short: '목표 대비 얼마나 왔는지 채워서 보여줘요', sits: ['지금 상태 보여주기'],
+  desc: '"목표 대비 얼마나 왔나" 한 가지만 말하는 부품이에요. 막대로 그리면 진행바, 동그라미로 그리면 진행 링이에요. 보기만 하는 부품이라 직접 끌 수 없어요.',
+  try: '"+4시간 기록"을 눌러보세요. 막대와 링이 같이 채워지고, 목표를 넘으면 꽉 찬 채로 멈춰요.',
+  when: '목표가 숫자 하나일 때 써요. 타이머처럼 남은 시간을 보여줄 땐 링이 잘 어울려요. 여러 비율을 나눠 보려면 도넛 차트를 써요.',
+  rules: [['숫자', '"12 / 40시간"처럼 글자를 같이'], ['움직임', '값이 바뀌면 0.2~0.4초 동안 부드럽게'], ['초과', '목표를 넘었을 때 모습을 미리 정하기']],
+  pair: '진행바 vs 슬라이더. 진행바는 보기만 하고, 슬라이더는 손잡이를 끌어서 바꿔요. 진행 링 vs 도넛 차트는 "하나의 진행"과 "여러 조각의 비율"의 차이예요.',
+  prompt: '주간 목표 40시간 대비 진행바를 만들어줘. 막대 위 왼쪽에 "이번 주 집중 시간", 오른쪽에 "12 / 40시간". 숫자가 바뀌면 0.3초 동안 늘어나고 목표를 넘으면 꽉 찬 채로 멈추게 해줘. 옆에는 같은 값을 동그란 진행 링으로도 보여줘.',
+  used: [['분기 목표판', 'goals'], ['하루 9칸 할 일', 'nine'], ['집중 타이머', 'timer'], ['SNS 시간 예산', 'sns']],
+  render(el) {
+    let h = 12; const G = 40, C = 2 * Math.PI * 34;
+    el.innerHTML = `<div class="progw"><div class="stack" style="flex:1;min-width:220px"><div class="row between"><b>이번 주 집중 시간</b><span class="num" id="pv"></span></div><div class="pbar"><span id="pb"></span></div><div class="row"><button class="btn primary sm" id="pa">+4시간 기록</button><button class="btn ghost sm" id="pr">되돌리기</button></div></div>
+      <svg class="pring" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="34" fill="none" stroke="#E1E8E4" stroke-width="8"/><circle id="pc" cx="40" cy="40" r="34" fill="none" stroke="var(--g)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" transform="rotate(-90 40 40)"/><text x="40" y="45" text-anchor="middle" font-size="15" font-weight="700" fill="var(--t1)" id="pt"></text></svg></div>`;
+    const draw = () => { const p = Math.min(1, h / G); $('#pv', el).textContent = `${h} / ${G}시간`; $('#pb', el).style.width = p * 100 + '%'; $('#pc', el).style.strokeDashoffset = C * (1 - p); $('#pt', el).textContent = Math.round(h / G * 100) + '%'; ro(h >= G ? `${h}시간 · 목표를 넘었어요. 막대는 꽉 찬 채로 멈춰요` : `${G - h}시간 남았어요`); };
+    $('#pa', el).onclick = () => { h += 4; draw(); };
+    $('#pr', el).onclick = () => { h = 12; draw(); };
+    draw();
+  }
+});
+
+part({
+  slug: 'stat', group: '보여주는 것', name: '통계 카드', en: 'Stat card · KPI', thumb: 'stat',
+  short: '중요한 숫자 하나를 크게 보여줘요', sits: ['지금 상태 보여주기', '기록을 한눈에'],
+  desc: '숫자 하나를 크게 쓰고 그 아래에 무슨 숫자인지 작게 적는 카드예요. 대시보드 맨 위에 서너 개 나란히 두는 경우가 많아요. 회사에서는 KPI 카드라고도 불러요.',
+  try: '"하루 더 기록"을 눌러보세요. 숫자와 지난주 대비 변화가 같이 바뀌어요.',
+  when: '그 화면에서 가장 먼저 알아야 하는 숫자가 있을 때 써요. 숫자가 다섯 개를 넘으면 표가 더 읽기 쉬워요.',
+  rules: [['크기', '숫자는 크게, 설명은 작고 흐리게'], ['비교', '"지난주보다 +3"처럼 비교 대상을 함께'], ['개수', '한 줄에 세 개, 많아야 네 개']],
+  pair: '통계 카드 vs 진행바. 통계 카드는 숫자 자체가 중요할 때, 진행바는 목표에 얼마나 가까운지가 중요할 때 써요.',
+  prompt: '대시보드 맨 위에 통계 카드 세 개를 나란히 만들어줘. \'이번 주 집중 시간\', \'해낸 일\', \'연속 기록\'. 숫자는 크고 굵게, 설명은 그 아래 작은 회색 글씨로. 각 카드에 지난주 대비 변화를 초록(늘어남) 또는 빨강(줄어듦) 화살표로 붙여줘.',
+  used: [['답장 대기함', 'waiting'], ['매일 칸 채우기', 'streak'], ['예상 vs 실제', 'estimate'], ['주간 회고', 'review']],
+  render(el) {
+    const S = [['이번 주 집중', 14, 11, '시간'], ['해낸 일', 23, 26, '개'], ['연속 기록', 5, 2, '일']];
+    const draw = () => { $('#sc', el).innerHTML = S.map(([n, v, p, u]) => { const d = v - p; return `<div class="kpi"><span class="label">${n}</span><b class="num">${v}<small>${u}</small></b><span class="${d >= 0 ? 'up' : 'dn'}">${d >= 0 ? '▲' : '▼'} 지난주보다 ${Math.abs(d)}${u}</span></div>`; }).join(''); };
+    el.innerHTML = `<div class="stack"><div class="kpis" id="sc"></div><button class="btn ghost sm" id="sa" style="justify-self:start">하루 더 기록</button></div>`;
+    $('#sa', el).onclick = () => { S[0][1] += 2; S[1][1] += 3; S[2][1] += 1; draw(); ro('숫자가 바뀌면 지난주 대비 화살표도 같이 바뀌어요'); };
+    draw(); ro('큰 숫자 + 작은 설명 + 비교. 이 세 가지가 통계 카드의 전부예요');
+  }
+});
+
+part({
+  slug: 'empty', group: '보여주는 것', name: '빈 상태', en: 'Empty state', thumb: 'empty',
+  short: '데이터가 0개일 때 대신 보여주는 화면', sits: ['지금 상태 보여주기'],
+  desc: '데이터가 하나도 없을 때 대신 보여주는 화면이에요. 모두가 맨 처음에 보는 화면인데 가장 자주 빠뜨려요.',
+  try: '"전부 지우기"를 눌러보세요. 비어도 무엇을 하면 되는지 알려줘요.',
+  when: '목록을 만들 때 항상 같이 만들어요. 처음 실행했을 때, 검색 결과가 없을 때, 불러오기가 실패했을 때 세 가지가 있어요.',
+  rules: [['세 가지', '왜 비었는지, 뭘 하면 채워지는지, 그 버튼'], ['말투', '"기록이 없습니다"보다 "첫 기록을 남겨 보세요"'], ['시점', '목록을 만드는 그 자리에서 함께 만들기']],
+  pair: '빈 상태 vs 오류. 빈 상태는 정상인데 아직 없는 것, 오류는 무언가 잘못돼서 못 보여주는 거예요. 문구를 다르게 써야 해요.',
+  prompt: '할 일이 없을 때는 목록 대신 가운데에 "아직 기록이 없어요"와 한 줄 설명, "할 일 추가" 버튼을 보여줘. 검색 결과가 없을 때는 "찾는 할 일이 없어요"처럼 문구를 다르게 해줘.',
+  used: [['생각 수집함', 'capture']],
+  render(el) {
+    let L = ['원고 2매', '거래처 회신'];
+    const draw = () => {
+      $('#eb', el).innerHTML = L.length ? `<ul class="zlist">${L.map(x => `<li><span>${x}</span></li>`).join('')}</ul><button class="btn ghost sm" id="clr" style="margin-top:10px">전부 지우기</button>` : `<div class="emptyb"><div class="eic" aria-hidden="true"></div><b>아직 기록이 없어요</b><p>첫 할 일을 넣으면 여기에 쌓여요.</p><button class="btn primary sm" id="fil">할 일 하나 넣기</button></div>`;
+      ro(L.length ? `할 일 ${L.length}개` : '비었을 때 아무것도 안 그리면 사용자는 고장 난 줄 알아요');
+    };
+    el.innerHTML = `<div id="eb" style="max-width:440px"></div>`;
+    el.onclick = e => { if (e.target.id === 'clr') { L = []; draw(); } if (e.target.id === 'fil') { L = ['원고 2매']; draw(); } };
+    draw();
+  }
+});
+
+part({
+  slug: 'accordion', group: '보여주는 것', name: '아코디언', en: 'Accordion', thumb: 'accordion',
+  short: '제목을 누르면 펼쳐지고 다시 누르면 접혀요', sits: ['묶어서 늘어놓기', '화면 나누고 옮기기'],
+  desc: '제목을 누르면 그 아래 내용이 펼쳐지고 한 번 더 누르면 접히는 부품이에요. 악기 아코디언처럼 접혔다 펴져서 붙은 이름이에요.',
+  try: '"한 번에 하나만 열기"를 켜고 제목을 여러 개 눌러보세요.',
+  when: '제목만 훑다가 필요한 것만 열어볼 때 써요. 자주 묻는 질문이나 설정 묶음이 대표적이에요.',
+  rules: [['표시', '열림과 닫힘을 −와 +로 보여주기'], ['규칙', '하나만 열릴지 여러 개 같이 열릴지 미리 정하기'], ['키보드', '제목에서 Enter나 Space로 열고 닫기']],
+  pair: '아코디언 vs 탭. 아코디언은 세로로 접고 펴서 여러 개를 같이 열 수도 있고, 탭은 가로로 나눠 한 번에 하나만 보여줘요.',
+  prompt: '자주 묻는 질문을 아코디언으로 만들어줘. 여러 항목을 같이 열 수 있게 하고 제목 오른쪽에 열리면 −, 닫히면 +를 보여줘. 제목은 Enter나 Space로도 열고 닫히게 해줘.',
+  render(el) {
+    const Q = [['시간표는 어디서 바꾸나요?', '설정 메뉴에서 요일과 시간대를 바꿀 수 있어요.'], ['주간 목표는 몇 시간이 좋나요?', '지난주에 실제로 쓴 시간에서 시작하세요. 처음부터 크게 잡으면 금방 손을 놓아요.'], ['지운 기록을 되살릴 수 있나요?', '지우기 전에 확인창이 한 번 떠요. 지운 뒤에는 되살릴 수 없어요.']];
+    el.innerHTML = `<div class="stack" style="max-width:520px"><label class="ck" style="width:max-content"><input type="checkbox" id="one"><span>한 번에 하나만 열기</span></label><div class="acc">${Q.map(([q, a], i) => `<div class="acc-i"><button class="acc-h" aria-expanded="${i === 0}" id="ah${i}"><span>${q}</span><i>${i === 0 ? '−' : '+'}</i></button><div class="acc-b" ${i === 0 ? '' : 'hidden'}>${a}</div></div>`).join('')}</div></div>`;
+    const sync = () => { const n = $$('.acc-h', el).filter(b => b.getAttribute('aria-expanded') === 'true').length; ro(`열린 항목 ${n}개 · ${$('#one', el).checked ? '하나만 열리는 규칙' : '여러 개 같이 열리는 규칙'}`); };
+    el.onclick = e => { const h = e.target.closest('.acc-h'); if (!h) return; const open = h.getAttribute('aria-expanded') !== 'true'; if (open && $('#one', el).checked) $$('.acc-h', el).forEach(x => { x.setAttribute('aria-expanded', 'false'); x.nextElementSibling.hidden = true; $('i', x).textContent = '+'; }); h.setAttribute('aria-expanded', open); h.nextElementSibling.hidden = !open; $('i', h).textContent = open ? '−' : '+'; sync(); };
+    el.onchange = sync; sync();
+  }
+});
+
+/* ========== 숫자를 그림으로 ========== */
+part({
+  slug: 'barchart', group: '숫자를 그림으로', name: '막대그래프', en: 'Bar chart', thumb: 'bar',
+  short: '막대 길이로 숫자를 비교해요', sits: ['기록을 한눈에'],
+  desc: '막대 길이로 숫자를 비교하는 그래프예요. 세로로 세우면 날짜별 변화, 가로로 눕히면 항목별 비교에 잘 맞아요.',
+  try: '막대에 마우스를 올리거나 눌러보세요. 정확한 숫자가 나와요. 아래 버튼으로 오늘 값을 바꿔볼 수 있어요.',
+  when: '요일별 집중 시간, 날짜별 해낸 일처럼 같은 단위의 숫자 여러 개를 비교할 때 써요.',
+  rules: [['시작점', '막대는 항상 0에서 시작하기'], ['강조', '오늘이나 최고값 하나만 진한 색으로'], ['숫자', '막대 위나 옆에 값을 작게 같이']],
+  pair: '막대그래프 vs 진행바. 진행바는 막대 하나로 목표 대비를, 막대그래프는 막대 여러 개로 서로를 비교해요.',
+  prompt: '최근 7일 집중 시간을 세로 막대그래프로 보여줘. 막대는 0에서 시작하고 오늘 막대만 진한 초록, 나머지는 옅은 초록으로. 막대 위에 시간을 작게 쓰고 아래에 요일을 붙여줘. 막대를 누르면 그날 기록을 보여줘.',
+  used: [['해낸 일 목록', 'done'], ['컨디션 일지', 'condition']],
+  render(el) {
+    const D = ['월', '화', '수', '목', '금', '토', '일'], V = [3.5, 4, 2, 5, 3, 1, 2.5];
+    const draw = () => { const mx = Math.max(6, ...V); $('#bc', el).innerHTML = V.map((v, i) => `<button class="bcol ${i === 6 ? 'td' : ''}" data-i="${i}" aria-label="${D[i]} ${v}시간"><small class="num">${v}</small><span style="height:${v / mx * 140}px"></span><small>${D[i]}</small></button>`).join(''); };
+    el.innerHTML = `<div class="stack"><div class="bchart" id="bc"></div><div class="row"><button class="btn ghost sm" id="bm">오늘 −30분</button><button class="btn ghost sm" id="bp">오늘 +30분</button></div></div>`;
+    el.onclick = e => { const b = e.target.closest('.bcol'); if (b) { const i = +b.dataset.i; ro(`${D[i]}요일 ${V[i]}시간 집중`); return; } if (e.target.id === 'bp') { V[6] = Math.min(8, V[6] + .5); draw(); } if (e.target.id === 'bm') { V[6] = Math.max(0, V[6] - .5); draw(); } };
+    el.onmouseover = e => { const b = e.target.closest('.bcol'); if (b) ro(`${D[+b.dataset.i]}요일 ${V[+b.dataset.i]}시간 집중`); };
+    draw(); ro(`이번 주 합계 ${V.reduce((a, b) => a + b, 0)}시간 · 오늘 막대만 진하게`);
+  }
+});
+
+part({
+  slug: 'heatmap', group: '숫자를 그림으로', name: '히트맵', en: 'Heatmap · 잔디 그래프', thumb: 'heatmap',
+  short: '날짜 칸을 격자로 깔고 색으로 채워요', sits: ['기록을 한눈에'],
+  desc: '날짜 칸을 격자로 깔아두고 한 날만 색칠하는 그림이에요. 진할수록 많이 한 날이에요. 깃허브가 이 모양으로 기록을 보여줘서 "잔디 그래프"라고도 불러요.',
+  try: '칸을 눌러보세요. 누를 때마다 한 단계씩 진해지고 네 번째에 비워져요.',
+  when: '몇 달치 습관이나 기록을 한눈에 보고 싶을 때 써요. 꾸준히 한 흐름과 빈 구간이 바로 보여요.',
+  rules: [['단계', '색 진하기는 4~5단계까지'], ['범례', '"적게 ▢▢▢▢ 많이" 범례를 같이'], ['오늘', '오늘 칸은 테두리로 따로 표시']],
+  pair: '히트맵 vs 달력. 달력은 한 달을 크게 보며 날마다 내용을 적고, 히트맵은 몇 달을 작은 칸으로 보며 "했는지"만 보여줘요.',
+  prompt: '최근 12주 습관 기록을 깃허브 잔디 같은 히트맵으로 만들어줘. 세로 7칸(월~일), 가로 12주로 깔고 칸을 누를 때마다 옅은 초록부터 진한 초록까지 4단계로 진해지게 해줘. 오늘 칸은 테두리로 표시하고 아래에 "적게 ~ 많이" 범례를 붙여줘.',
+  used: [['매일 칸 채우기', 'streak']],
+  render(el) {
+    let s = 5; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+    const V = Array.from({ length: 84 }, () => rnd() < .35 ? 0 : 1 + Math.floor(rnd() * 3)); V[83] = 0;
+    const draw = () => { $('#hg', el).innerHTML = V.map((v, i) => `<button class="hc ${i === 83 ? 'td' : ''}" data-l="${v}" data-i="${i}" aria-label="${84 - i}일 전 ${v}단계"></button>`).join(''); ro(`12주 중 ${V.filter(Boolean).length}일 기록 · 진할수록 많이 한 날`); };
+    el.innerHTML = `<div class="stack"><div style="overflow-x:auto"><div class="hgrid" id="hg"></div></div><div class="row hint" style="gap:4px">적게 <i class="hc" data-l="0"></i><i class="hc" data-l="1"></i><i class="hc" data-l="2"></i><i class="hc" data-l="3"></i> 많이</div></div>`;
+    el.onclick = e => { const c = e.target.closest('button.hc'); if (!c) return; const i = +c.dataset.i; V[i] = (V[i] + 1) % 4; draw(); };
+    draw();
+  }
+});
+
+part({
+  slug: 'timeline', group: '숫자를 그림으로', name: '타임라인', en: 'Timeline · Gantt bar', thumb: 'timeline',
+  short: '시간 순서대로 가로 막대 위에 칠해요', sits: ['기록을 한눈에'],
+  desc: '가로 막대 하나를 시간 축으로 두고 언제 무엇을 했는지 구간별로 칠하는 그림이에요. 여러 줄로 늘리면 프로젝트 일정에 쓰는 간트 차트가 돼요.',
+  try: '색칠된 구간에 마우스를 올리거나 눌러보세요. 몇 시부터 몇 시까지 무엇을 했는지 나와요.',
+  when: '하루를 어떻게 썼는지, 일정이 어떤 순서로 이어지는지 보여줄 때 써요.',
+  rules: [['축', '시간 눈금을 아래에 일정한 간격으로'], ['색', '종류마다 색 하나. 범례를 같이'], ['빈칸', '기록 없는 시간은 비워서 보여주기']],
+  pair: '타임라인 vs 막대그래프. 막대그래프는 "얼마나"를, 타임라인은 "언제부터 언제까지"를 보여줘요.',
+  prompt: '오늘 하루를 아침 8시부터 밤 12시까지 가로 타임라인으로 보여줘. 작업은 진한 초록, 연락은 옅은 초록, 쉬기는 회색으로 칠하고 아래에 시간 눈금(8, 12, 16, 20, 24)을 붙여줘. 구간에 마우스를 올리면 "10:00~12:30 작업"처럼 보여줘.',
+  used: [['시간 기록기', 'tracker']],
+  render(el) {
+    const S = [[9, 12.5, 0, '외주 작업'], [12.5, 13.5, 2, '점심'], [13.5, 14.5, 1, '연락·회의'], [14.5, 17.5, 0, '내 작업'], [17.5, 18, 2, '쉬기'], [20, 21, 1, '메일 정리']], C = ['var(--g)', 'var(--g-2)', '#C5CCD3'], N = ['작업', '연락', '쉬기'];
+    const f = h => `${Math.floor(h)}:${h % 1 ? '30' : '00'}`;
+    el.innerHTML = `<div class="stack"><div class="tlbar">${S.map(([a, b, c, n], i) => `<button class="seg" data-i="${i}" style="left:${(a - 8) / 16 * 100}%;width:${(b - a) / 16 * 100}%;background:${C[c]}" aria-label="${f(a)}부터 ${f(b)}까지 ${n}"></button>`).join('')}</div><div class="ticks num"><span>8</span><span>12</span><span>16</span><span>20</span><span>24</span></div><div class="row hint">${N.map((n, i) => `<span class="row" style="gap:6px"><i class="lg" style="background:${C[i]}"></i>${n}</span>`).join('')}</div></div>`;
+    const show = b => { const [a, z, , n] = S[+b.dataset.i]; ro(`${f(a)}~${f(z)} ${n}`); };
+    el.onmouseover = e => { const b = e.target.closest('.seg'); if (b) show(b); };
+    el.onclick = e => { const b = e.target.closest('.seg'); if (b) show(b); };
+    ro('빈 곳은 기록이 없는 시간이에요');
+  }
+});
+
+/* ========== 나타났다 사라지는 것 ========== */
+part({
+  slug: 'modal', group: '나타났다 사라지는 것', name: '모달 · 확인창', en: 'Modal · Dialog', thumb: 'modal',
+  short: '화면 위에 떠서 대답을 받기 전엔 못 닫아요', sits: ['잠깐 알려주기', '무언가 실행하게'],
+  desc: '화면 위에 떠서 뒤를 어둡게 막는 창이에요. 닫기 전엔 다른 일을 못 해요. 정말 멈춰 세워야 할 때만 써요. 삭제 전에 한 번 더 묻는 확인창이 대표적이에요.',
+  try: '"기록 삭제"를 누르고 Esc를 눌러보세요. 창이 닫히고 원래 버튼으로 돌아가요.',
+  when: '삭제처럼 되돌릴 수 없는 일 직전, 또는 꼭 대답을 받아야 할 때만 써요. 결과만 알리면 되는 건 토스트로 충분해요.',
+  rules: [['문구', '"예/아니오" 대신 "삭제" / "그냥 두기"처럼 하는 일로'], ['초점', '처음엔 안전한 버튼에, 닫으면 누른 버튼으로 돌아가기'], ['구조', '브라우저 기본 경고창(alert)은 쓰지 않기']],
+  pair: '모달 vs 토스트. 모달은 대답을 받아야 할 때, 토스트는 결과만 알리면 될 때예요. 모달 vs 드로어는 "멈춰 세우기"와 "옆에서 손보기"의 차이예요.',
+  prompt: '삭제를 누르면 화면 가운데 확인창을 띄우고 뒤는 어둡게 막아줘. 문구는 "이 기록을 지울까요? 되돌릴 수 없어요", 버튼은 "삭제"와 "그냥 두기". Esc로도 닫히게 하고, 삭제하면 "삭제됐어요" 알림을 잠깐 보여줘.',
+  used: [['하루 열고 닫기', 'openclose']],
+  render(el) {
+    let n = 3;
+    el.innerHTML = `<div class="stack" style="max-width:440px"><div class="row between"><span>저장된 기록 <b class="num" id="mc">${n}</b>개</span><button class="btn danger sm" id="md">기록 삭제</button></div><p class="hint">삭제는 되돌릴 수 없어요. 그래서 확인창을 붙여요.</p></div>`;
+    $('#md', el).onclick = e => {
+      const btn = e.target, ov = document.createElement('div'); ov.className = 'ov';
+      ov.innerHTML = `<div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgt"><h3 id="dlgt">이 기록을 지울까요?</h3><p>되돌릴 수 없어요.</p><div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" id="keep">그냥 두기</button><button class="btn danger" id="del">삭제</button></div></div>`;
+      const close = msg => { ov.remove(); btn.focus(); if (msg) ro(msg); };
+      ov._close = () => close('Esc로 닫혔어요 · 초점이 삭제 버튼으로 돌아왔어요');
+      ov.onclick = ev => { if (ev.target === ov) close('바깥을 눌러 닫혔어요'); };
+      document.body.appendChild(ov); $('#keep', ov).focus(); ro('확인창이 떠 있는 동안 뒤 화면은 누를 수 없어요');
+      $('#keep', ov).onclick = () => close('그냥 뒀어요');
+      $('#del', ov).onclick = () => { n = Math.max(0, n - 1); $('#mc', el).textContent = n; close('기록 하나를 지웠어요'); toast('삭제됐어요'); };
+    };
+    ro('아직 아무것도 지우지 않았어요');
+  }
+});
+
+part({
+  slug: 'toast', group: '나타났다 사라지는 것', name: '토스트 · 스낵바', en: 'Toast · Snackbar', thumb: 'toast',
+  short: '결과를 잠깐 알리고 저절로 사라져요', sits: ['잠깐 알려주기'],
+  desc: '작업 결과를 화면 아래에 잠깐 알리고 저절로 사라지는 메시지예요. 토스터에서 빵이 튀어나오듯 올라와서 붙은 이름이에요. "되돌리기" 같은 버튼이 붙으면 스낵바라고 불러요.',
+  try: '"저장"을 누르거나 할 일 하나를 지워보세요. 지운 경우엔 5초 안에 되돌릴 수 있어요.',
+  when: '사용자가 대답할 필요 없이 결과만 알면 될 때 써요. 대답을 받아야 하면 모달이에요.',
+  rules: [['시간', '3초 안팎. 버튼이 붙으면 5초 정도로 길게'], ['흐름', '떠 있어도 하던 작업을 막지 않기'], ['흔적', '사라진 뒤에도 결과를 화면 어딘가에 남기기']],
+  pair: '토스트 vs 모달. 토스트는 알리고 사라지고, 모달은 대답할 때까지 남아요. 토스트 vs 툴팁은 "결과 알림"과 "설명 보충"의 차이예요.',
+  prompt: '저장하면 화면 아래에 "저장했어요"를 3초 동안 보여주고 위쪽에 마지막 저장 시각을 남겨줘. 할 일을 지우면 "되돌리기" 버튼이 붙은 알림을 5초 동안 띄우고, 누르면 원래대로 돌려줘.',
+  render(el) {
+    let L = ['원고 2매', '거래처 회신', '산책 30분'], last = '아직 저장 안 함';
+    const draw = () => { $('#tt', el).innerHTML = `<div class="row between"><b>할 일</b><span class="hint">${last}</span></div><ul class="zlist">${L.map((x, i) => `<li><span>${x}</span><button class="btn sm ghost" data-d="${i}">지우기</button></li>`).join('')}</ul><button class="btn primary sm" id="ts" style="margin-top:10px">저장</button>`; };
+    el.innerHTML = `<div id="tt" style="max-width:440px"></div>`;
+    el.onclick = e => {
+      if (e.target.id === 'ts') { const d = new Date(); last = `마지막 저장 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; draw(); toast('저장했어요'); ro('3초 뒤 저절로 사라져요 · 저장 시각은 위에 남아요'); }
+      const b = e.target.closest('[data-d]'); if (b) { const i = +b.dataset.d, x = L.splice(i, 1)[0]; draw(); toast(`"${x}"를 지웠어요`, ['되돌리기', () => { L.splice(i, 0, x); draw(); ro('되돌렸어요'); }], 5000); ro('5초 안에 되돌리기를 누르면 원래대로 돌아와요'); }
+    };
+    draw(); ro('저장이나 지우기를 해보세요');
+  }
+});
+
+part({
+  slug: 'tooltip', group: '나타났다 사라지는 것', name: '툴팁', en: 'Tooltip', thumb: 'tooltip',
+  short: '마우스를 올리면 잠깐 뜨는 짧은 설명', sits: ['잠깐 알려주기'],
+  desc: '마우스를 올리거나 키보드로 고르면 잠깐 뜨는 말풍선 설명이에요. 이름만으로 뜻이 애매한 곳에 한 줄을 보태요.',
+  try: '"i"에 마우스를 올리거나 Tab 키로 옮겨보세요.',
+  when: '이름표만으로 뜻이 애매할 때 한 줄 보충으로 써요. 꼭 알아야 하는 안내는 툴팁에 숨기지 말고 화면에 바로 써요.',
+  rules: [['길이', '한 줄, 길어도 두 줄'], ['띄우기', '마우스를 올려도, 키보드로 골라도 뜨게'], ['닫기', 'Esc로 닫히고 말풍선 위로 마우스를 옮겨도 남아 있게']],
+  pair: '툴팁 vs 토스트. 툴팁은 내가 궁금해서 찾아보는 설명, 토스트는 화면이 먼저 알려주는 결과예요.',
+  prompt: '"집중 시간" 이름표 옆에 i 아이콘을 두고, 마우스를 올리거나 키보드로 고르면 "알림을 끄고 한 가지 일만 한 시간"이라는 툴팁을 띄워줘. Esc로 닫히게 하고 말풍선 위로 마우스를 옮겨도 사라지지 않게 해줘.',
+  render(el) {
+    const T = [['집중 시간', '알림을 끄고 한 가지 일만 한 시간'], ['주간 목표', '월요일부터 일요일까지 채우려는 집중 시간']];
+    el.innerHTML = `<div class="stack" style="gap:18px;max-width:440px">${T.map(([n, d], i) => `<div class="row between"><span class="row" style="gap:6px">${n}<span class="tipw"><button class="tipb" aria-describedby="tp${i}" aria-label="${n} 설명">i</button><span class="tip" role="tooltip" id="tp${i}">${d}</span></span></span><b class="num">${i ? '20시간' : '14시간'}</b></div>`).join('')}</div>`;
+    el.addEventListener('focusin', e => { if (e.target.classList.contains('tipb')) ro('키보드로 골라도 떠요'); });
+    el.addEventListener('mouseover', e => { if (e.target.closest('.tipw')) ro('마우스를 올리면 떠요 · 말풍선으로 옮겨도 남아 있어요'); });
+    ro('i에 마우스를 올려보세요');
+  }
+});
+
+part({
+  slug: 'drawer', group: '나타났다 사라지는 것', name: '드로어', en: 'Drawer · Side sheet', thumb: 'drawer',
+  short: '화면 옆에서 밀려 나오는 보조 패널', sits: ['화면 나누고 옮기기'],
+  desc: '화면 옆에서 서랍처럼 밀려 나오는 패널이에요. 보던 화면을 떠나지 않고 설정 같은 걸 손볼 때 써요. 폰 화면 아래에서 올라오면 바텀시트라고 불러요.',
+  try: '"설정"을 눌러보세요. 그다음 "뒤 화면 막기"를 끄고 다시 열면 드로어가 떠 있어도 뒤를 누를 수 있어요.',
+  when: '지금 화면을 보면서 옆에서 무언가를 고쳐야 할 때 써요. 꼭 대답을 받아야 하면 모달이에요.',
+  rules: [['위치', '오른쪽과 왼쪽 중 어디서 나올지 정하기'], ['뒤 화면', '막을지 그대로 쓰게 둘지 정하기'], ['닫기', '바깥 누르기, Esc, 닫기 버튼 세 가지 모두']],
+  pair: '드로어 vs 사이드바. 사이드바는 늘 떠 있는 목록이고, 드로어는 필요할 때만 밀려 나왔다 들어가요.',
+  prompt: '설정 버튼을 누르면 오른쪽에서 드로어가 밀려 나오게 해줘. 안에는 \'알림 받기\', \'주말 숨기기\' 토글 스위치를 넣어줘. 뒤 화면은 어둡게 막고, 바깥을 누르거나 Esc나 닫기 버튼으로 닫히게 해줘.',
+  usedNote: '체험관 도구에는 아직 쓰이지 않았어요. 설정이 많은 도구를 만들 때 써요.',
+  render(el) {
+    el.innerHTML = `<div class="drw-wrap"><div class="drw-main"><div class="row between"><b>이번 주 시간표</b><button class="btn sm" id="op">설정</button></div><ul class="zlist" style="margin-top:12px" id="dm">${['월 · 원고 2매', '수 · 90분 집중', '금 · 주간 회고'].map(t => `<li><button class="lnk">${t}</button></li>`).join('')}</ul><label class="ck" style="margin-top:12px;width:max-content"><input type="checkbox" id="blk" checked><span>열려 있는 동안 뒤 화면 막기</span></label></div><div class="drw-ov" hidden></div><aside class="drw" aria-label="설정" hidden><div class="row between"><b>설정</b><button class="btn sm" id="cl">닫기</button></div><label class="ck"><input type="checkbox" checked><span>알림 받기</span></label><label class="ck"><input type="checkbox"><span>주말 숨기기</span></label><label class="ck"><input type="checkbox" checked><span>월요일부터 시작</span></label></aside></div>`;
+    const d = $('.drw', el), o = $('.drw-ov', el);
+    const close = () => { d.classList.remove('in'); later(() => { d.hidden = true; }, 220); o.hidden = true; $('#op', el).focus(); ro('닫혔어요 · 초점이 설정 버튼으로 돌아왔어요'); };
+    $('#op', el).onclick = () => { d.hidden = false; requestAnimationFrame(() => d.classList.add('in')); o.hidden = !$('#blk', el).checked; ro($('#blk', el).checked ? '뒤 화면이 막혀 있어요. 바깥을 누르면 닫혀요' : '뒤 화면을 그대로 쓸 수 있어요. 왼쪽 목록을 눌러보세요'); };
+    $('#cl', el).onclick = close; o.onclick = close;
+    el.onclick = e => { if (e.target.closest('.lnk')) ro(`"${e.target.textContent}" 눌림 · 드로어가 떠 있어도 뒤 화면이 동작해요`); };
+    const esc = e => { if (e.key === 'Escape' && !d.hidden) close(); };
+    addEventListener('keydown', esc); onLeave(() => removeEventListener('keydown', esc));
+    ro('설정을 눌러보세요');
+  }
+});
+
+/* ========== 옮겨 다니는 것 ========== */
+part({
+  slug: 'topbar', group: '옮겨 다니는 것', name: '상단바', en: 'Top bar · App bar', thumb: 'topbar',
+  short: '맨 위에 고정된 띠', sits: ['화면 나누고 옮기기'],
+  desc: '화면 맨 위에 고정된 띠예요. 화면 이름과 버튼 한두 개를 담아요. 아래 상자 안을 스크롤해 보세요. 띠만 제자리에 있어요.',
+  try: '아래 상자를 스크롤해보세요. 내용은 올라가는데 띠는 그대로예요.',
+  when: '거의 모든 화면에 써요. 지금 어느 화면인지와 가장 자주 쓰는 버튼을 늘 보이게 해요.',
+  rules: [['높이', '56px 안팎'], ['안전 영역', '폰의 시계와 노치에 가리지 않게 위 여백 추가'], ['담는 것', '화면 이름 + 버튼 한두 개. 셋을 넘으면 메뉴로 접기']],
+  pair: '상단바 vs 탭. 상단바는 화면 이름과 버튼을 담는 띠, 탭은 그 아래에서 내용을 나누는 줄이에요. 둘이 같이 붙어 있는 경우가 많아요.',
+  prompt: '맨 위에 고정 상단바를 만들어줘. 왼쪽에 "이번 주 시간표", 오른쪽에 ＋ 버튼. 스크롤해도 띠는 제자리에 있게 하고 높이는 56px, 폰 노치에 가리지 않게 위 여백을 더 줘.',
+  usedNote: '체험관 상세 화면 맨 위의 도구 이름과 이전·다음 버튼 줄이 상단바와 같은 역할이에요.',
+  render(el) {
+    el.innerHTML = `<div class="phone"><div class="pbarr"><b>이번 주 시간표</b><button class="btn primary sm" aria-label="추가">＋</button></div><div class="pscroll" id="ps">${['월 · 원고 2매', '화 · 거래처 회신', '수 · 90분 집중', '목 · 회의 2건', '금 · 주간 회고', '토 · 산책', '일 · 쉼', '다음 주 월 · 견적서', '다음 주 화 · 촬영'].map(t => `<div class="pitem">${t}</div>`).join('')}</div></div>`;
+    $('#ps', el).onscroll = e => ro(`${Math.round(e.target.scrollTop)}px 스크롤 · 띠는 제자리`);
+    ro('고정(sticky)이 상단바의 전부예요');
+  }
+});
+
+part({
+  slug: 'sidebar', group: '옮겨 다니는 것', name: '사이드바', en: 'Sidebar · Navigation', thumb: 'sidebar',
+  short: '화면 옆에 늘 떠 있는 목록', sits: ['화면 나누고 옮기기'],
+  desc: '화면 왼쪽(또는 오른쪽)에 늘 떠 있는 목록이에요. 누르면 가운데 내용이 바뀌어요. 지금 어디에 있는지 파랗게(여기선 초록으로) 표시해요.',
+  try: '왼쪽 목록을 눌러보세요. 고른 칸이 표시되고 오른쪽 내용이 바뀌어요.',
+  when: '메뉴가 다섯 개가 넘고 컴퓨터 화면처럼 넓을 때 써요. 폰에서는 접어서 버튼 하나로 숨겨요.',
+  rules: [['현재 위치', '지금 보는 메뉴를 색으로 표시'], ['묶음', '항목이 많으면 작은 제목으로 묶기'], ['폰', '좁은 화면에서는 접거나 위로 옮기기']],
+  pair: '사이드바 vs 탭. 메뉴가 2~5개면 탭, 그보다 많고 화면이 넓으면 사이드바예요. 사이드바 vs 드로어는 "늘 있음"과 "필요할 때만"의 차이예요.',
+  prompt: '컴퓨터 화면용으로 왼쪽에 사이드바를 만들어줘. \'오늘, 이번 주, 기록, 설정\' 메뉴가 세로로 있고, 누르면 오른쪽 내용이 바뀌게 해줘. 지금 보는 메뉴는 연한 초록 바탕에 굵은 글씨로 표시하고, 폰에서는 사이드바를 위로 옮겨 가로 줄로 바꿔줘.',
+  used: [],
+  usedNote: '체험관 왼쪽의 도구 목록이 바로 사이드바예요.',
+  render(el) {
+    const M = [['오늘', '토요일 · 원고 2매, 산책 30분'], ['이번 주', '할 일 18개 중 11개 끝냄'], ['기록', '이번 달 집중 52시간'], ['설정', '알림 켜짐 · 월요일 시작']];
+    let c = 0;
+    const draw = () => { $('#sb', el).innerHTML = M.map(([n], i) => `<button aria-current="${i === c ? 'page' : 'false'}" data-i="${i}">${n}</button>`).join(''); $('#sc', el).innerHTML = `<b>${M[c][0]}</b><p>${M[c][1]}</p>`; ro(`지금 위치: ${M[c][0]}`); };
+    el.innerHTML = `<div class="sbw"><nav class="sbn" id="sb"></nav><div class="sbc" id="sc"></div></div>`;
+    el.onclick = e => { const b = e.target.closest('#sb button'); if (b) { c = +b.dataset.i; draw(); } };
+    draw();
+  }
+});
+
+part({
+  slug: 'tabs', group: '옮겨 다니는 것', name: '탭', en: 'Tabs', thumb: 'tabs',
+  short: '고른 분류의 내용만 보여줘요', sits: ['화면 나누고 옮기기'],
+  desc: '한 자리에서 고른 분류의 내용만 보여주고 나머지는 뒤에 숨겨두는 부품이에요. 서류철의 견출지(tab)에서 온 이름이에요.',
+  try: '탭을 누르거나, 탭을 고른 상태에서 좌우 방향키를 눌러보세요.',
+  when: '같은 화면 안에서 나란한 분류 서너 개를 오갈 때 써요. 두 분류를 한눈에 비교해야 하면 탭으로 나누지 말고 한 화면에 펼쳐요.',
+  rules: [['표시', '고른 탭이 색과 밑줄로 바로 보이게'], ['키보드', '좌우 방향키로 옮기고 Enter나 Space로 바꾸기'], ['개수', '2~5개. 그보다 많으면 드롭다운이나 사이드바']],
+  pair: '탭 vs 세그먼트 컨트롤. 탭은 아예 다른 내용으로 옮겨가고, 세그먼트는 같은 내용을 보는 방식만 바꿔요.',
+  prompt: '오늘, 이번 주, 통계를 탭으로 묶어줘. 고른 탭은 초록색과 밑줄로 표시하고 그 탭의 내용만 보여줘. 좌우 방향키로 옮긴 뒤 Enter로 바뀌게 해줘.',
+  used: [['하루 열고 닫기', 'openclose']],
+  render(el) {
+    const T = [['오늘', '토요일 · 원고 2매, 산책 30분, 주간 회고 20분'], ['이번 주', '이번 주 7일 · 할 일 18개 중 11개 끝냄. 수요일 오전이 가장 많이 채워졌어요.'], ['통계', '집중 시간 · 계획 40시간 중 37시간. 창작이 4시간 모자랐어요.']];
+    let c = 0;
+    const draw = (f) => { $('#tb', el).innerHTML = T.map(([n], i) => `<button role="tab" aria-selected="${i === c}" tabindex="${i === c ? 0 : -1}" data-i="${i}">${n}</button>`).join(''); $('#tp', el).textContent = T[c][1]; ro(`선택된 탭 · ${T[c][0]}`); if (f) $$('#tb button', el)[c].focus(); };
+    el.innerHTML = `<div style="max-width:520px"><div class="tabs" role="tablist" id="tb"></div><div class="tabp" role="tabpanel" id="tp"></div></div>`;
+    el.onclick = e => { const b = e.target.closest('[role=tab]'); if (b) { c = +b.dataset.i; draw(); } };
+    el.onkeydown = e => { if (!e.target.matches('[role=tab]')) return; if (e.key === 'ArrowRight') { c = (c + 1) % T.length; draw(true); } if (e.key === 'ArrowLeft') { c = (c + T.length - 1) % T.length; draw(true); } };
+    draw();
+  }
+});
+
+/* ========== 미니 그림 ========== */
+const THUMB = (() => {
+  const B = '#00C471', L = '#8FE0B8', G = '#C5CCD3', W = '#fff', D = '#16201B';
+  const r = (w, h, bg, x = '') => `<i style="width:${w}px;height:${h}px;background:${bg};border-radius:3px;${x}"></i>`;
+  const f = (a, dir = 'column', gap = 3, x = '') => `<i style="display:flex;flex-direction:${dir};gap:${gap}px;align-items:center;${x}">${a.join('')}</i>`;
+  const t = (txt, x = '') => `<i style="font-size:10px;font-weight:700;line-height:1;white-space:nowrap;${x}">${txt}</i>`;
+  const box = 'background:#fff;border-radius:4px;padding:4px 6px;box-shadow:inset 0 0 0 1.5px ' + G;
+  const cells = (n, cols, fn, size = 7) => `<i style="display:grid;grid-template-columns:repeat(${cols},${size}px);gap:2px">${Array.from({ length: n }, (_, i) => r(size, size, fn(i), 'border-radius:2px')).join('')}</i>`;
+  return {
+    button: t('버튼', `background:${B};color:#fff;border-radius:5px;padding:5px 9px`),
+    checkbox: f([f([t('✓', `background:${B};color:#fff;width:13px;height:13px;border-radius:3px;display:grid;place-items:center;font-size:9px`), r(20, 4, G)], 'row', 4), f([r(13, 13, W, `border-radius:50%;box-shadow:inset 0 0 0 4px ${B}`), r(20, 4, G)], 'row', 4)], 'column', 4),
+    switch: f([`<i style="position:relative;width:30px;height:17px;border-radius:9px;background:${B}">${r(13, 13, W, 'position:absolute;right:2px;top:2px;border-radius:50%')}</i>`, `<i style="position:relative;width:30px;height:17px;border-radius:9px;background:${G}">${r(13, 13, W, 'position:absolute;left:2px;top:2px;border-radius:50%')}</i>`], 'column', 4),
+    chip: f([t('✓ 업무', `background:${D};color:#fff;border-radius:99px;padding:3px 6px`), t('쉼', `background:${W};color:#4C5A53;border-radius:99px;padding:3px 6px`)], 'row'),
+    seg: `<i style="display:flex;gap:2px;background:#E1E8E4;border-radius:5px;padding:2px">${r(15, 13, W)}${r(15, 13, 'transparent')}${r(15, 13, 'transparent')}</i>`,
+    input: t('입력…', box + ';color:#84928B;width:44px'),
+    select: t('업무 ▾', box),
+    slider: `<i style="position:relative;width:44px;height:4px;background:${W};border-radius:2px">${r(24, 4, B, 'position:absolute;left:0;top:0')}${r(13, 13, W, `position:absolute;left:19px;top:-4.5px;border-radius:50%;box-shadow:0 0 0 2px ${B}`)}</i>`,
+    date: t('11/24 ▦', box),
+    number: f([t('−', box + ';padding:4px 5px'), t('3', 'font-size:12px'), t('+', box + ';padding:4px 5px')], 'row', 3),
+    card: f([f([r(14, 3, D), r(14, 3, G), r(8, 4, L)], 'column', 3, `background:${W};padding:5px;border-radius:4px;align-items:flex-start`), f([r(14, 3, D), r(14, 3, G), r(8, 4, G)], 'column', 3, `background:${W};padding:5px;border-radius:4px;align-items:flex-start`)], 'row', 4),
+    list: f([r(44, 7, W), r(44, 7, '#EEF3F0'), r(44, 7, W)], 'column', 2),
+    table: cells(12, 4, i => i < 4 ? '#DDE5E0' : W, 8),
+    tag: f([t('완료', `background:#E4F6EC;color:#00703F;border-radius:4px;padding:3px 5px`), t('임박', `background:#FDECEC;color:#E5484D;border-radius:4px;padding:3px 5px`)], 'row', 3),
+    progress: f([`<i style="width:44px;height:6px;background:${W};border-radius:3px;overflow:hidden">${r(28, 6, B, 'border-radius:3px')}</i>`, r(18, 18, 'transparent', `border-radius:50%;border:3px solid ${B};border-right-color:${W}`)], 'column', 4),
+    stat: f([t('14', `background:${W};border-radius:4px;padding:5px 6px;font-size:13px`), t('23', `background:${W};border-radius:4px;padding:5px 6px;font-size:13px`)], 'row'),
+    empty: t('비어 있음', 'color:#84928B;border:1.5px dashed ' + G + ';border-radius:4px;padding:6px 4px'),
+    accordion: f([f([r(28, 4, D), t('−', 'font-size:10px')], 'row', 6), r(40, 8, W), f([r(28, 4, D), t('+', 'font-size:10px')], 'row', 6)], 'column', 3),
+    bar: f([r(6, 10, L), r(6, 18, L), r(6, 8, L), r(6, 22, B)], 'row', 3, 'align-items:flex-end;height:24px'),
+    heatmap: cells(28, 7, i => [1, 2, 4, 7, 9, 10, 11, 15, 16, 18, 20, 22, 23, 25, 26].includes(i) ? ([2, 10, 16, 23].includes(i) ? '#00703F' : B) : W, 5),
+    timeline: `<i style="display:flex;width:46px;height:10px;background:${W};border-radius:3px;overflow:hidden">${r(8, 10, 'transparent')}${r(14, 10, B, 'border-radius:0')}${r(6, 10, G, 'border-radius:0')}${r(10, 10, L, 'border-radius:0')}</i>`,
+    modal: `<i style="position:relative;width:48px;height:34px;background:rgba(22,32,27,.35);border-radius:4px">${f([r(16, 3, D), f([r(8, 5, G), r(8, 5, '#E5484D')], 'row', 2)], 'column', 4, `position:absolute;left:9px;top:7px;background:${W};padding:4px;border-radius:3px`)}</i>`,
+    toast: `<i style="position:relative;width:48px;height:34px;background:${W};border-radius:4px">${t('저장됨', `position:absolute;left:5px;bottom:4px;background:${D};color:#fff;border-radius:4px;padding:3px 5px;font-size:8px`)}</i>`,
+    tooltip: f([t('설명', `background:${D};color:#fff;border-radius:4px;padding:3px 5px;font-size:8px`), t('i', `width:12px;height:12px;border-radius:50%;background:${W};color:#4C5A53;display:grid;place-items:center;font-size:8px`)], 'column', 3),
+    drawer: `<i style="position:relative;width:48px;height:34px;background:${W};border-radius:4px;overflow:hidden">${r(18, 34, B, 'position:absolute;right:0;top:0;border-radius:0;opacity:.9')}</i>`,
+    topbar: `<i style="width:48px;height:34px;background:${W};border-radius:4px;overflow:hidden;display:flex;flex-direction:column;gap:3px">${r(48, 9, D, 'border-radius:0')}${r(36, 3, G, 'margin-left:5px')}${r(30, 3, G, 'margin-left:5px')}</i>`,
+    sidebar: `<i style="width:48px;height:34px;background:${W};border-radius:4px;overflow:hidden;display:flex;gap:3px">${f([r(10, 3, B), r(10, 3, G), r(10, 3, G)], 'column', 3, 'background:#EEF3F0;padding:4px 2px;width:15px')}${f([r(22, 3, D), r(20, 3, G)], 'column', 3, 'padding-top:5px;align-items:flex-start')}</i>`,
+    tabs: f([f([t('오늘', `color:#00703F;border-bottom:2px solid ${B};padding-bottom:2px`), t('주간', 'color:#84928B;padding-bottom:4px')], 'row', 6), r(44, 10, W)], 'column', 4)
+  };
+})();
+</script>
+<script>
+const GROUPS = [
+  ['누르는 것', '누르면 일이 실행되거나 표시가 남아요'],
+  ['적는 것', '글을 쓰거나 값을 골라 넣어요'],
+  ['보여주는 것', '내용을 묶고 늘어놓고 지금 상태를 알려줘요'],
+  ['숫자를 그림으로', '쌓인 기록을 한눈에 보여줘요'],
+  ['나타났다 사라지는 것', '필요할 때만 떴다가 닫혀요'],
+  ['옮겨 다니는 것', '자리를 지키며 다른 화면으로 옮겨줘요']
+];
+const SITS = ['무언가 실행하게', '하나만 고르게', '여러 개 고르게', '켜고 끄게', '숫자나 시간을 정하게', '글을 적게', '묶어서 늘어놓기', '지금 상태 보여주기', '기록을 한눈에', '잠깐 알려주기', '화면 나누고 옮기기'];
+const ORDER = GROUPS.flatMap(([g]) => PARTS.filter(p => p.group === g));
+let sit = null, q = '', cur = null;
+$('#total').textContent = PARTS.length;
+const ok = p => (!sit || p.sits.includes(sit)) && (!q || (p.name + p.en + p.desc).toLowerCase().includes(q.toLowerCase()));
+function drawNav() {
+  $('#nav').innerHTML = GROUPS.map(([g]) => {
+    const L = PARTS.filter(p => p.group === g && ok(p));
+    return L.length ? `<div><h3>${g}</h3>${L.map(p => `<a class="nl" href="#${p.slug}" ${cur === p ? 'aria-current="page"' : ''}><span>${esc(p.name)}</span><small>${esc(p.en.split(' ·')[0])}</small></a>`).join('')}</div>` : '';
+  }).join('') || '<p class="none">맞는 부품이 없어요.</p>';
+}
+function drawHome() {
+  $('#sits').innerHTML = `<button data-s="" aria-pressed="${!sit}">전체</button>` + SITS.map(s => `<button data-s="${s}" aria-pressed="${sit === s}">${s}</button>`).join('');
+  $('#groups').innerHTML = GROUPS.map(([g, d]) => {
+    const L = PARTS.filter(p => p.group === g && ok(p));
+    return L.length ? `<section class="panel group"><h2>${g}</h2><p>${d}</p><div class="pgrid">${L.map(p => `<a class="pcard" href="#${p.slug}"><span class="th" aria-hidden="true">${THUMB[p.thumb] || ''}</span><span class="tx"><b>${esc(p.name)}</b><span class="d">${esc(p.short)}</span></span></a>`).join('')}</div></section>` : '';
+  }).join('') || '<section class="panel"><p class="empty">맞는 부품이 없어요. 다른 상황을 골라보세요.</p></section>';
+}
+$('#sits').onclick = e => { const b = e.target.closest('button'); if (!b) return; sit = b.dataset.s || null; drawHome(); drawNav(); };
+$('#q').oninput = e => { q = e.target.value.trim(); drawNav(); if (!cur) drawHome(); };
+function mount(p) {
+  leave();
+  const old = $('#demo'), box = old.cloneNode(false); old.replaceWith(box);
+  ro = t => { $('#ro').textContent = t; };
+  ro(p.ro0 || '');
+  p.render(box);
+}
+function route() {
+  const p = PARTS.find(x => x.slug === decodeURIComponent(location.hash.slice(1)));
+  leave(); cur = p || null;
+  $('#app').classList.toggle('home', !p);
+  $('#home').hidden = !!p; $('#detail').hidden = !p; $('#rail').hidden = !p;
+  if (p) {
+    $('#d-grp').textContent = p.group; $('#d-name').textContent = p.name; $('#d-en').textContent = p.en; $('#d-desc').textContent = p.desc;
+    $('#d-try').textContent = p.try || ''; $('#d-tryw').hidden = !p.try;
+    $('#d-prompt').textContent = p.prompt; $('#copy').textContent = '요청문 복사하기';
+    $('#d-when').textContent = p.when; $('#d-pair').textContent = p.pair;
+    $('#d-rules').innerHTML = p.rules.map(([k, v]) => `<li><b>${k}</b><span>${v}</span></li>`).join('');
+    $('#d-used').innerHTML = (p.used || []).map(([n, s]) => `<a href="시간관리-도구-체험관.html#${s}">${n}</a>`).join('');
+    $('#d-usedh').textContent = p.used && p.used.length ? '두 파일을 같은 폴더에 두면 눌러서 바로 열려요.' : (p.usedNote || '체험관 도구에는 아직 쓰이지 않았어요.');
+    const i = ORDER.indexOf(p); $('#prev').disabled = i <= 0; $('#next').disabled = i >= ORDER.length - 1;
+    document.title = p.name + ' · UI 체험관';
+    mount(p);
+  } else { $('#demo').innerHTML = ''; document.title = 'UI 체험관'; drawHome(); }
+  drawNav(); scrollTo(0, 0);
+}
+$('#brand').onclick = $('#back').onclick = () => { location.hash = ''; };
+$('#prev').onclick = () => { const i = ORDER.indexOf(cur); if (i > 0) location.hash = ORDER[i - 1].slug; };
+$('#next').onclick = () => { const i = ORDER.indexOf(cur); if (i < ORDER.length - 1) location.hash = ORDER[i + 1].slug; };
+$('#copy').onclick = () => {
+  const b = $('#copy'), txt = $('#d-prompt').textContent;
+  const done = () => { b.textContent = '복사했어요'; setTimeout(() => b.textContent = '요청문 복사하기', 1600); };
+  const fb = () => { const r = document.createRange(); r.selectNodeContents($('#d-prompt')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = '선택했어요. Ctrl+C로 복사하세요'; };
+  try { navigator.clipboard.writeText(txt).then(done, fb); } catch (e) { fb(); }
+};
+addEventListener('keydown', e => { if (e.key === 'Escape') $$('.ov').forEach(o => o._close ? o._close() : o.remove()); });
+addEventListener('hashchange', route);
+route();
+</script>
+</body></html>
